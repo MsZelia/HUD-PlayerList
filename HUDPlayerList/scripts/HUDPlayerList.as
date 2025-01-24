@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.1.4";
+      public static const MOD_VERSION:String = "1.1.5";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -57,6 +57,8 @@ package
       
       private static const PLAYER_TEAM_MEMBER:String = "TeamMember";
       
+      private static const CAMP_MARKER:String = "YourCampMarker";
+      
       private static const MAX_PLAYERS_PRIVATE:uint = 8;
       
       private static const MAX_PLAYERS_PUBLIC:uint = 24;
@@ -79,6 +81,8 @@ package
       
       private static const STRING_CAPS:String = "{caps}";
       
+      private static const STRING_VALUE:String = "{value}";
+      
       private static const TITLE_HUDMENU:String = "HUDMenu";
       
       private static const TITLE_TEXTCHAT:String = "TextChat";
@@ -88,6 +92,28 @@ package
       private static const TITLE_DELIMITED:String = "|";
       
       private static const MAIN_MENU:String = "MainMenu";
+      
+      private static const VENDING_CATEGORIES:* = {
+         "{APPAREL}":0,
+         "{ARMOR0}":1,
+         "{ARMOR1}":2,
+         "{ARMOR2}":3,
+         "{ARMOR3}":4,
+         "{WEAPON0}":5,
+         "{WEAPON1}":6,
+         "{WEAPON2}":7,
+         "{WEAPON3}":8,
+         "{MODS}":9,
+         "{STIMPAK}":10,
+         "{MEDS}":11,
+         "{FOOD}":12,
+         "{DRINK}":13,
+         "{AMMO}":14,
+         "{EXPLOSIVE}":15,
+         "{JUNK}":16,
+         "{PLAN}":17,
+         "{MISC}":18
+      };
        
       
       private var _lastConfigUpdateTime:Number = 0;
@@ -115,6 +141,10 @@ package
       private var PublicTeamsData:*;
       
       private var MapMenuData:*;
+      
+      private var vendorData:*;
+      
+      private var campMarkers:*;
       
       private var _players:Array;
       
@@ -144,6 +174,8 @@ package
       
       public function HUDPlayerList()
       {
+         this.campMarkers = {};
+         this.vendorData = {};
          this.players_tf = [];
          this.separators = [];
          super();
@@ -181,6 +213,7 @@ package
                this.isHudMenu = false;
                BSUIDataManager.Subscribe("MenuStackData",this.updateIsMainMenu);
             }
+            BSUIDataManager.Subscribe("RecentActivitiesData",this.onRecentActivitiesDataUpdate);
             trace(MOD_NAME + " added to stage: " + getQualifiedClassName(this.topLevel));
          }
          else
@@ -213,6 +246,21 @@ package
          {
             return x.menuName == MAIN_MENU;
          });
+      }
+      
+      private function onRecentActivitiesDataUpdate(event:FromClientDataEvent) : void
+      {
+         var vendors:* = {};
+         var i:int = 0;
+         while(i < event.data.recentActivities.length)
+         {
+            if(event.data.recentActivities[i].type == 3)
+            {
+               vendors[event.data.recentActivities[i].mapMarkerId] = event.data.recentActivities[i].vendingCategoryCounts;
+            }
+            i++;
+         }
+         this.vendorData = vendors;
       }
       
       public function loadConfig() : void
@@ -647,8 +695,53 @@ package
                {
                   applyColor(player.type);
                }
+               if(config.vendorData.enabled)
+               {
+                  var markerId:* = campMarkers[player.name];
+                  if(markerId != null && vendorData[markerId] != null && vendorData[markerId].length > 0)
+                  {
+                     var i:int = 0;
+                     while(i < config.vendorData.format.length)
+                     {
+                        var vdata:* = formatVendingData(config.vendorData.format[i],vendorData[markerId]);
+                        if(vdata != "")
+                        {
+                           var color:* = !!config.vendorData.usePlayerColor ? LastDisplayPlayer.textColor : getCustomColor("vendorData");
+                           displayMessage(vdata);
+                           LastDisplayPlayer.textColor = color;
+                        }
+                        i++;
+                     }
+                  }
+               }
             }
          }
+      }
+      
+      private function formatVendingData(format:String, vendorData:Array) : String
+      {
+         if(format == null || format.length == 0)
+         {
+            return "";
+         }
+         var textToDisplay:String = format;
+         var hasData:Boolean = false;
+         for(cat in VENDING_CATEGORIES)
+         {
+            if(textToDisplay.indexOf(cat) != -1)
+            {
+               if(vendorData.length > VENDING_CATEGORIES[cat] && vendorData[VENDING_CATEGORIES[cat]] != 0 && config.vendorData.formats[cat] != null)
+               {
+                  textToDisplay = textToDisplay.replace(cat,config.vendorData.formats[cat].replace(STRING_VALUE,vendorData[VENDING_CATEGORIES[cat]]));
+                  hasData = true;
+               }
+               else
+               {
+                  textToDisplay = textToDisplay.replace(cat,"");
+               }
+            }
+         }
+         return hasData ? textToDisplay : "";
       }
       
       public function displayPlayerList() : void
@@ -684,6 +777,17 @@ package
                         displayMessage("AccountInfoData: " + this.AccountInfoData.data);
                         displayMessage("PublicTeamsData: " + this.PublicTeamsData.data);
                         displayMessage("MapMenuData: " + this.MapMenuData.data);
+                        displayMessage("campMarkers");
+                        for(m in this.campMarkers)
+                        {
+                           displayMessage(m + ":" + this.campMarkers[m]);
+                        }
+                        displayMessage("vendorData");
+                        for(v in this.vendorData)
+                        {
+                           displayMessage(v + ":" + this.vendorData[v]);
+                        }
+                        displayMessage("----------");
                         break;
                      case "showVersion":
                         displayMessage(FULL_MOD_NAME + (this.isHudMenu ? "" : " (non-HUD)"));
@@ -751,6 +855,7 @@ package
          this._textChatUsers = this.getTextChatUserList();
          var players:Array = [];
          var playerName:String = "";
+         var _campMarkers:* = {};
          if(this.MapMenuData && this.MapMenuData.data && this.MapMenuData.data.MarkerData)
          {
             for each(marker in this.MapMenuData.data.MarkerData)
@@ -783,9 +888,16 @@ package
                         "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false)
                      });
                      break;
+                  case CAMP_MARKER:
+                     if(marker.isVending)
+                     {
+                        _campMarkers[marker.owningPlayerName.split(TITLE_DELIMITED)[0]] = marker.markerID;
+                     }
+                     break;
                }
             }
          }
+         this.campMarkers = _campMarkers;
          if(this.PublicTeamsData && this.PublicTeamsData.data && this.PublicTeamsData.data.publicTeams)
          {
             for each(team in this.PublicTeamsData.data.publicTeams)

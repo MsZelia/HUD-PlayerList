@@ -50,6 +50,22 @@ package
             formats = {};
             formats.bounty = config.formatBounty != null ? config.formatBounty : "({caps}c)";
          }
+         if(!config.vendorData)
+         {
+            config.vendorData = {};
+            config.vendorData.enabled = false;
+         }
+         else if(config.vendorData.enabled)
+         {
+            if(!config.vendorData.format)
+            {
+               config.vendorData.format = [];
+            }
+            if(!config.vendorData.formats)
+            {
+               config.vendorData.formats = {};
+            }
+         }
          if(!config.sortOrder)
          {
             config.sortOrder = [];
