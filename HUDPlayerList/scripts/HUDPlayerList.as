@@ -83,6 +83,8 @@ package
       
       private static const STRING_VALUE:String = "{value}";
       
+      private static const STRING_CHARACTER_NAME:String = "{characterName}";
+      
       private static const TITLE_HUDMENU:String = "HUDMenu";
       
       private static const TITLE_TEXTCHAT:String = "TextChat";
@@ -677,6 +679,14 @@ package
             {
                var textToDisplay:String = this.formatPlayer(player);
                textToDisplay = textToDisplay.replace(STRING_NAME,player.name).replace(STRING_TYPE,player.type).replace(STRING_LEVEL,player.level);
+               if(player.type == PLAYER_LOCAL)
+               {
+                  textToDisplay = textToDisplay.replace(STRING_CHARACTER_NAME,this.CharacterInfoData.data.name);
+               }
+               else
+               {
+                  textToDisplay = textToDisplay.replace(STRING_CHARACTER_NAME,"");
+               }
                displayMessage(textToDisplay);
                var colorApplied:Boolean = false;
                if(player.type == PLAYER_WANTED)
