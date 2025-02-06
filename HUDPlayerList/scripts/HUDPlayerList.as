@@ -85,6 +85,16 @@ package
       
       private static const STRING_CHARACTER_NAME:String = "{characterName}";
       
+      private static const STRING_ANGLE:String = "{angle}";
+      
+      private static const STRING_ANGLE_COMPASS:String = "{angleCompass}";
+      
+      private static const STRING_DISTANCE:String = "{distance}";
+      
+      private static const STRING_DIRECTION:String = "{direction}";
+      
+      private static const STRINGS_COORDINATES:* = [STRING_ANGLE,STRING_ANGLE_COMPASS,STRING_DISTANCE,STRING_DIRECTION];
+      
       private static const TITLE_HUDMENU:String = "HUDMenu";
       
       private static const TITLE_TEXTCHAT:String = "TextChat";
@@ -116,6 +126,14 @@ package
          "{PLAN}":17,
          "{MISC}":18
       };
+      
+      private static const RAD2DEG:Number = 180 / Math.PI;
+      
+      private static const MAP_DISTANCE_CONST:Number = 1 / 4096;
+      
+      private static const LOCALIZED_HEADINGS:* = ["$Compass_West","$Compass_North","$Compass_East","$Compass_South"];
+      
+      private static var HEADINGS:* = [];
        
       
       private var _lastConfigUpdateTime:Number = 0;
@@ -148,6 +166,10 @@ package
       
       private var campMarkers:*;
       
+      private var playerPosition:*;
+      
+      private var visitedCamps:*;
+      
       private var _players:Array;
       
       private var _playerCount:int;
@@ -176,6 +198,7 @@ package
       
       public function HUDPlayerList()
       {
+         this.visitedCamps = {};
          this.campMarkers = {};
          this.vendorData = {};
          this.players_tf = [];
@@ -199,6 +222,39 @@ package
       public static function ShowHUDMessage(param1:String) : void
       {
          GlobalFunc.ShowHUDMessage("[" + FULL_MOD_NAME + "] " + param1);
+      }
+      
+      private static function getDirection(y:Number, x:Number) : String
+      {
+         var angle:* = Math.atan2(y,x);
+         return getDirection(angle);
+      }
+      
+      private static function getDirection(atan2angle:Number) : String
+      {
+         if(HEADINGS.length == 0)
+         {
+            return "";
+         }
+         var angle:* = atan2angle;
+         var increment:* = 2 * Math.PI / HEADINGS.length;
+         var testangle:* = -Math.PI + increment / 2;
+         var i:int = 0;
+         while(angle > testangle)
+         {
+            i++;
+            if(i > HEADINGS.length - 1)
+            {
+               break;
+            }
+            testangle += increment;
+         }
+         return HEADINGS[i % HEADINGS.length];
+      }
+      
+      private static function getDistance(x:Number, y:Number) : Number
+      {
+         return Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
       }
       
       public function addedToStageHandler(param1:Event) : *
@@ -310,6 +366,16 @@ package
       private function initTextField() : void
       {
          this.dummy_tf = new TextField();
+         var i:int = 0;
+         var headings:* = [];
+         while(i < 4)
+         {
+            GlobalFunc.SetText(this.dummy_tf,LOCALIZED_HEADINGS[i]);
+            headings.push(this.dummy_tf.text);
+            i++;
+         }
+         HEADINGS = [headings[0],headings[0] + headings[1] + headings[0],headings[1] + headings[0],headings[1] + headings[1] + headings[0],headings[1],headings[1] + headings[1] + headings[2],headings[1] + headings[2],headings[2] + headings[1] + headings[2],headings[2],headings[2] + headings[3] + headings[2],headings[3] + headings[2],headings[3] + headings[3] + headings[2],headings[3],headings[3] + headings[3] + headings[0],headings[3] + headings[0],headings[0] + headings[3] + headings[0]];
+         GlobalFunc.SetText(this.dummy_tf,"");
          this.formatMessage();
       }
       
@@ -707,20 +773,46 @@ package
                }
                if(config.vendorData.enabled)
                {
-                  var markerId:* = campMarkers[player.name];
-                  if(markerId != null && vendorData[markerId] != null && vendorData[markerId].length > 0)
+                  var marker:* = campMarkers[player.name];
+                  if(marker != null && vendorData[marker.markerId] != null && vendorData[marker.markerId].length > 0)
                   {
-                     var i:int = 0;
-                     while(i < config.vendorData.format.length)
+                     var yDiff:Number = marker.y - playerPosition.y;
+                     var xDiff:Number = marker.x - playerPosition.x;
+                     var distance:int = int(getDistance(xDiff,yDiff) / MAP_DISTANCE_CONST);
+                     if(distance < 20)
                      {
-                        var vdata:* = formatVendingData(config.vendorData.format[i],vendorData[markerId]);
-                        if(vdata != "")
+                        visitedCamps[player.name] = true;
+                     }
+                     if(!(config.vendorData.hideVisitedCamps && visitedCamps[player.name]))
+                     {
+                        var angle:* = Math.atan2(yDiff,xDiff);
+                        var direction:* = getDirection(angle);
+                        var iangle:int = (360 - angle * RAD2DEG) % 360;
+                        var iangleCompass:int = (450 + angle * RAD2DEG) % 360;
+                        var i:int = 0;
+                        if(visitedCamps[player.name] && config.customColors["visitedCamp"] != null)
                         {
-                           var color:* = !!config.vendorData.usePlayerColor ? LastDisplayPlayer.textColor : getCustomColor("vendorData");
-                           displayMessage(vdata);
-                           LastDisplayPlayer.textColor = color;
+                           var color:Number = Number(config.customColors["visitedCamp"]);
                         }
-                        i++;
+                        else if(Boolean(config.vendorData.usePlayerColor))
+                        {
+                           color = LastDisplayPlayer.textColor;
+                        }
+                        else
+                        {
+                           color = getCustomColor("vendorData");
+                        }
+                        while(i < config.vendorData.format.length)
+                        {
+                           var vdata:* = formatVendingData(config.vendorData.format[i],vendorData[marker.markerId]);
+                           if(vdata != "")
+                           {
+                              vdata = vdata.replace(STRING_ANGLE,iangle).replace(STRING_ANGLE_COMPASS,iangleCompass).replace(STRING_DIRECTION,direction).replace(STRING_DISTANCE,distance);
+                              displayMessage(vdata);
+                              LastDisplayPlayer.textColor = color;
+                           }
+                           i++;
+                        }
                      }
                   }
                }
@@ -879,6 +971,10 @@ package
                         "level":this.CharacterInfoData.data.level,
                         "bounty":this.CharacterInfoData.data.bounty
                      });
+                     playerPosition = {
+                        "x":marker.x,
+                        "y":marker.y
+                     };
                      break;
                   case PLAYER_REMOTE:
                   case PLAYER_TEAM_MEMBER:
@@ -901,7 +997,11 @@ package
                   case CAMP_MARKER:
                      if(marker.isVending)
                      {
-                        _campMarkers[marker.owningPlayerName.split(TITLE_DELIMITED)[0]] = marker.markerID;
+                        _campMarkers[marker.owningPlayerName.split(TITLE_DELIMITED)[0]] = {
+                           "markerId":marker.markerID,
+                           "x":marker.x,
+                           "y":marker.y
+                        };
                      }
                      break;
                }
