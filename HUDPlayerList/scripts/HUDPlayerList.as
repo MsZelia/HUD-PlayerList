@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.1.6";
+      public static const MOD_VERSION:String = "1.1.7";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -255,6 +255,122 @@ package
       private static function getDistance(x:Number, y:Number) : Number
       {
          return Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
+      }
+      
+      private function onTeamMarkersUpdate(param1:FromClientDataEvent) : void
+      {
+         var teammateMarkerBase:*;
+         var teamNameplates:*;
+         var markers:Array;
+         var i:int;
+         var j:int;
+         var hpBar:*;
+         try
+         {
+            if(!this.isHudMenu)
+            {
+               return;
+            }
+            teammateMarkerBase = this.topLevel.TeammateMarkerBase;
+            if(teammateMarkerBase == null)
+            {
+               return;
+            }
+            teamNameplates = teammateMarkerBase.TeamNameplates;
+            if(teamNameplates == null)
+            {
+               return;
+            }
+            if(param1.data.Markers == null)
+            {
+               return;
+            }
+            markers = param1.data.Markers.concat();
+            i = 0;
+            while(i < teamNameplates.length)
+            {
+               j = 0;
+               while(j < markers.length)
+               {
+                  if(teamNameplates[i].entityID == markers[j].entityID)
+                  {
+                     teamNameplates[i].NamePlateNameGroup_mc.visible = true;
+                     if(config != null && config.force != null)
+                     {
+                        if(config.force.isLocalPlayer != null)
+                        {
+                           teamNameplates[i].isLocalPlayer = config.force.isLocalPlayer;
+                        }
+                        if(config.force.inLOS != null)
+                        {
+                           teamNameplates[i].inLOS = config.force.inLOS;
+                        }
+                        if(config.force.isEventGroup != null)
+                        {
+                           teamNameplates[i].isEventGroup = config.force.isEventGroup;
+                        }
+                        if(config.force.isNuclearWinterMode != null)
+                        {
+                           teamNameplates[i].isNuclearWinterMode = config.force.isNuclearWinterMode;
+                        }
+                        if(config.force.deadState != null)
+                        {
+                           teamNameplates[i].deadState = config.force.deadState;
+                        }
+                        if(config.force.isTeammate != null)
+                        {
+                           teamNameplates[i].isTeammate = config.force.isTeammate;
+                        }
+                        if(config.force.isBeyondRailLimits != null)
+                        {
+                           teamNameplates[i].isBeyondRailLimits = config.force.isBeyondRailLimits;
+                        }
+                     }
+                     teamNameplates[i].NamePlateNameGroup_mc.visible = true;
+                     if(config.preDraw)
+                     {
+                        teamNameplates[i].redrawUIComponent();
+                     }
+                     if(teamNameplates[i].NamePlateNameGroup_mc.numChildren == 5)
+                     {
+                        hpBar = new TextField();
+                        hpBar.setTextFormat(teamNameplates[i].Name_tf.getTextFormat());
+                        teamNameplates[i].NamePlateNameGroup_mc.addChild(hpBar);
+                     }
+                     else
+                     {
+                        if(!(teamNameplates[i].NamePlateNameGroup_mc.numChildren > 5 && teamNameplates[i].NamePlateNameGroup_mc.getChildAt(5) is TextField))
+                        {
+                           teamNameplates[i].Name_tf.text = "x" + teamNameplates[i].NamePlateNameGroup_mc.numChildren + " " + teamNameplates[i].NamePlateNameGroup_mc.getChildAt(teamNameplates[i].NamePlateNameGroup_mc.numChildren - 1);
+                           break;
+                        }
+                        hpBar = teamNameplates[i].NamePlateNameGroup_mc.getChildAt(5);
+                     }
+                     teamNameplates[i].Name_tf.text = markers[j].displayName.split(TITLE_DELIMITED)[0];
+                     hpBar.x = config != null ? config.markerX : -100;
+                     hpBar.y = config != null ? config.markerY : 50;
+                     hpBar.width = 200;
+                     hpBar.visible = true;
+                     hpBar.text = Number(markers[j].HPPct * 100).toFixed(1) + "%" + (markers[j].playerState == "potentialHostile" ? (config != null ? config.markerPvp : "\t\tpvpOn") : "");
+                     teamNameplates[i].NamePlateNameGroup_mc.graphics.clear();
+                     teamNameplates[i].NamePlateNameGroup_mc.graphics.beginFill(65280,1);
+                     teamNameplates[i].NamePlateNameGroup_mc.graphics.drawRect(-100,hpBar.y + 22,200 * markers[j].HPPct,3);
+                     teamNameplates[i].NamePlateNameGroup_mc.graphics.endFill();
+                     teamNameplates[i].NamePlateNameGroup_mc.graphics.beginFill(16711680);
+                     teamNameplates[i].NamePlateNameGroup_mc.graphics.drawRect(100,hpBar.y + 22,-200 * markers[j].rads,3);
+                     teamNameplates[i].NamePlateNameGroup_mc.graphics.endFill();
+                     markers.splice(j,1);
+                     teamNameplates[i].NamePlateNameGroup_mc.visible = true;
+                     break;
+                  }
+                  j++;
+               }
+               i++;
+            }
+         }
+         catch(e:*)
+         {
+         }
       }
       
       public function addedToStageHandler(param1:Event) : *
@@ -745,6 +861,14 @@ package
             {
                var textToDisplay:String = this.formatPlayer(player);
                textToDisplay = textToDisplay.replace(STRING_NAME,player.name).replace(STRING_TYPE,player.type).replace(STRING_LEVEL,player.level);
+               var yDiff:Number = player.y - playerPosition.y;
+               var xDiff:Number = player.x - playerPosition.x;
+               var distance:int = int(getDistance(xDiff,yDiff) / MAP_DISTANCE_CONST);
+               var angle:* = Math.atan2(yDiff,xDiff);
+               var direction:* = getDirection(angle);
+               var iangle:int = (360 - angle * RAD2DEG) % 360;
+               var iangleCompass:int = (450 + angle * RAD2DEG) % 360;
+               textToDisplay = textToDisplay.replace(STRING_ANGLE,iangle).replace(STRING_ANGLE_COMPASS,iangleCompass).replace(STRING_DIRECTION,direction).replace(STRING_DISTANCE,distance);
                if(player.type == PLAYER_LOCAL)
                {
                   textToDisplay = textToDisplay.replace(STRING_CHARACTER_NAME,this.CharacterInfoData.data.name);
@@ -776,19 +900,19 @@ package
                   var marker:* = campMarkers[player.name];
                   if(marker != null && vendorData[marker.markerId] != null && vendorData[marker.markerId].length > 0)
                   {
-                     var yDiff:Number = marker.y - playerPosition.y;
-                     var xDiff:Number = marker.x - playerPosition.x;
-                     var distance:int = int(getDistance(xDiff,yDiff) / MAP_DISTANCE_CONST);
+                     yDiff = marker.y - playerPosition.y;
+                     xDiff = marker.x - playerPosition.x;
+                     distance = int(getDistance(xDiff,yDiff) / MAP_DISTANCE_CONST);
                      if(distance < 20)
                      {
                         visitedCamps[player.name] = true;
                      }
                      if(!(config.vendorData.hideVisitedCamps && visitedCamps[player.name]))
                      {
-                        var angle:* = Math.atan2(yDiff,xDiff);
-                        var direction:* = getDirection(angle);
-                        var iangle:int = (360 - angle * RAD2DEG) % 360;
-                        var iangleCompass:int = (450 + angle * RAD2DEG) % 360;
+                        angle = Math.atan2(yDiff,xDiff);
+                        direction = getDirection(angle);
+                        iangle = (360 - angle * RAD2DEG) % 360;
+                        iangleCompass = (450 + angle * RAD2DEG) % 360;
                         var i:int = 0;
                         if(visitedCamps[player.name] && config.customColors["visitedCamp"] != null)
                         {
@@ -969,7 +1093,9 @@ package
                         "name":this.AccountInfoData.data.name,
                         "type":marker.markerType,
                         "level":this.CharacterInfoData.data.level,
-                        "bounty":this.CharacterInfoData.data.bounty
+                        "bounty":this.CharacterInfoData.data.bounty,
+                        "x":marker.x,
+                        "y":marker.y
                      });
                      playerPosition = {
                         "x":marker.x,
@@ -991,7 +1117,9 @@ package
                         "level":marker.playerLevel,
                         "bounty":marker.bounty,
                         "isFriend":marker.isFriend,
-                        "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false)
+                        "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false),
+                        "x":marker.x,
+                        "y":marker.y
                      });
                      break;
                   case CAMP_MARKER:
