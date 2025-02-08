@@ -196,8 +196,22 @@ package
       
       private var toggleVisibility:Boolean = false;
       
+      private var teamMarkersTimer:Timer;
+      
+      private var lastTeamMarkers:*;
+      
+      private var lastTeamMarkerDistance:*;
+      
+      private var initTeamMarkerNumChildren:int = 0;
+      
+      private var _lastOnTeamMarkersUpdate:Number = 0;
+      
+      private var _lastUpdateTeamMarkersTimer:Number = 0;
+      
       public function HUDPlayerList()
       {
+         this.lastTeamMarkerDistance = {};
+         this.lastTeamMarkers = {};
          this.visitedCamps = {};
          this.campMarkers = {};
          this.vendorData = {};
@@ -226,7 +240,7 @@ package
       
       private static function getDirection(y:Number, x:Number) : String
       {
-         var angle:* = Math.atan2(y,x);
+         var angle:Number = Math.atan2(y,x);
          return getDirection(angle);
       }
       
@@ -236,9 +250,9 @@ package
          {
             return "";
          }
-         var angle:* = atan2angle;
-         var increment:* = 2 * Math.PI / HEADINGS.length;
-         var testangle:* = -Math.PI + increment / 2;
+         var angle:Number = atan2angle;
+         var increment:Number = 2 * Math.PI / HEADINGS.length;
+         var testangle:Number = -Math.PI + increment / 2;
          var i:int = 0;
          while(angle > testangle)
          {
@@ -257,16 +271,147 @@ package
          return Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
       }
       
+      private function updateTeamMarkersTimer() : void
+      {
+         var teamNameplates:*;
+         var i:int;
+         var t1:Number;
+         var marker:*;
+         var hpBar:*;
+         var text:String;
+         try
+         {
+            t1 = Number(getTimer());
+            if(topLevel == null || topLevel.TeammateMarkerBase == null || topLevel.TeammateMarkerBase.TeamNameplates == null)
+            {
+               return;
+            }
+            if(config != null && Boolean(config.disableTimer))
+            {
+               return;
+            }
+            teamNameplates = topLevel.TeammateMarkerBase.TeamNameplates;
+            i = 0;
+            while(i < teamNameplates.length)
+            {
+               teamNameplates[i].isLocalPlayer = false;
+               teamNameplates[i].inLOS = true;
+               if(teamNameplates[i].hasOwnProperty("_Distance") && teamNameplates[i]._Distance > 0)
+               {
+                  lastTeamMarkerDistance[teamNameplates[i].entityID] = int(teamNameplates[i]._Distance);
+               }
+               teamNameplates[i].distance = 0;
+               marker = lastTeamMarkers[teamNameplates[i].entityID];
+               if(marker != null)
+               {
+                  if(marker.playerState == "hostile" || marker.playerState == "hostileGroup" || marker.wantedState == "wanted" || marker.wantedState == "mostWanted")
+                  {
+                     teamNameplates[i].playerState = "potentialHostile";
+                  }
+                  teamNameplates[i].displayName = marker.displayName;
+               }
+               if(teamNameplates[i].NamePlateNameGroup_mc.numChildren > initTeamMarkerNumChildren)
+               {
+                  hpBar = teamNameplates[i].NamePlateNameGroup_mc.getChildAt(initTeamMarkerNumChildren);
+                  cfg = {
+                     "markerX":-100,
+                     "markerY":50,
+                     "markerBarY":50,
+                     "enemyColor":GlobalFunc.COLOR_TEXT_ENEMY,
+                     "nonEnemyColor":GlobalFunc.COLOR_TEXT_BODY,
+                     "markerPvp":"\t\tpvpOn",
+                     "markerEnemy":" \t\tENEMY"
+                  };
+                  if(config != null)
+                  {
+                     if(config.markerX != null)
+                     {
+                        cfg.markerX = config.markerX;
+                     }
+                     if(config.markerY != null)
+                     {
+                        cfg.markerY = config.markerY;
+                     }
+                     if(config.markerBarY != null)
+                     {
+                        cfg.markerBarY = config.markerBarY;
+                     }
+                     if(config.enemyColor != null)
+                     {
+                        cfg.enemyColor = config.enemyColor;
+                     }
+                     if(config.nonEnemyColor != null)
+                     {
+                        cfg.nonEnemyColor = config.nonEnemyColor;
+                     }
+                     if(config.markerPvp != null)
+                     {
+                        cfg.markerPvp = config.markerPvp;
+                     }
+                     if(config.markerEnemy != null)
+                     {
+                        cfg.markerEnemy = config.markerEnemy;
+                     }
+                  }
+                  hpBar.x = cfg.markerX;
+                  hpBar.y = cfg.markerY;
+                  text = "";
+                  if(marker.HPPct == 1)
+                  {
+                     text += "100%";
+                  }
+                  else
+                  {
+                     text += Number(marker.HPPct * 100).toFixed(1) + "%";
+                  }
+                  if(lastTeamMarkerDistance[teamNameplates[i].entityID] != null)
+                  {
+                     text += " " + lastTeamMarkerDistance[teamNameplates[i].entityID];
+                  }
+                  if(marker.playerState == "hostile" || marker.playerState == "hostileGroup" || marker.wantedState == "wanted" || marker.wantedState == "mostWanted")
+                  {
+                     text += cfg.markerEnemy;
+                     hpBar.textColor = cfg.enemyColor;
+                  }
+                  else
+                  {
+                     if(marker.playerState == "potentialHostile")
+                     {
+                        text += cfg.markerPvp;
+                     }
+                     hpBar.textColor = cfg.nonEnemyColor;
+                  }
+                  hpBar.text = text;
+                  hpBar.visible = true;
+               }
+               teamNameplates[i].NamePlateNameGroup_mc.visible = true;
+               i++;
+            }
+            this._lastUpdateTeamMarkersTimer = getTimer() - t1;
+         }
+         catch(e:*)
+         {
+            throw e;
+         }
+      }
+      
       private function onTeamMarkersUpdate(param1:FromClientDataEvent) : void
       {
          var teammateMarkerBase:*;
          var teamNameplates:*;
-         var markers:Array;
+         var markers:*;
          var i:int;
          var j:int;
          var hpBar:*;
+         var t1:Number;
+         var marker:*;
+         var markerBarY:Number;
+         var markerBarX:Number;
+         var markerBarWidth:Number;
+         var markerBarHeight:Number;
          try
          {
+            t1 = Number(getTimer());
             if(!this.isHudMenu)
             {
                return;
@@ -287,89 +432,70 @@ package
             }
             markers = param1.data.Markers.concat();
             i = 0;
+            while(i < markers.length)
+            {
+               lastTeamMarkers[markers[i].entityID] = markers[i];
+               i++;
+            }
+            i = 0;
             while(i < teamNameplates.length)
             {
-               j = 0;
-               while(j < markers.length)
+               marker = lastTeamMarkers[teamNameplates[i].entityID];
+               if(marker != null)
                {
-                  if(teamNameplates[i].entityID == markers[j].entityID)
+                  teamNameplates[i].NamePlateNameGroup_mc.visible = true;
+                  if(initTeamMarkerNumChildren == 0)
                   {
-                     teamNameplates[i].NamePlateNameGroup_mc.visible = true;
-                     if(config != null && config.force != null)
-                     {
-                        if(config.force.isLocalPlayer != null)
-                        {
-                           teamNameplates[i].isLocalPlayer = config.force.isLocalPlayer;
-                        }
-                        if(config.force.inLOS != null)
-                        {
-                           teamNameplates[i].inLOS = config.force.inLOS;
-                        }
-                        if(config.force.isEventGroup != null)
-                        {
-                           teamNameplates[i].isEventGroup = config.force.isEventGroup;
-                        }
-                        if(config.force.isNuclearWinterMode != null)
-                        {
-                           teamNameplates[i].isNuclearWinterMode = config.force.isNuclearWinterMode;
-                        }
-                        if(config.force.deadState != null)
-                        {
-                           teamNameplates[i].deadState = config.force.deadState;
-                        }
-                        if(config.force.isTeammate != null)
-                        {
-                           teamNameplates[i].isTeammate = config.force.isTeammate;
-                        }
-                        if(config.force.isBeyondRailLimits != null)
-                        {
-                           teamNameplates[i].isBeyondRailLimits = config.force.isBeyondRailLimits;
-                        }
-                     }
-                     teamNameplates[i].NamePlateNameGroup_mc.visible = true;
-                     if(config.preDraw)
-                     {
-                        teamNameplates[i].redrawUIComponent();
-                     }
-                     if(teamNameplates[i].NamePlateNameGroup_mc.numChildren == 5)
-                     {
-                        hpBar = new TextField();
-                        hpBar.setTextFormat(teamNameplates[i].Name_tf.getTextFormat());
-                        teamNameplates[i].NamePlateNameGroup_mc.addChild(hpBar);
-                     }
-                     else
-                     {
-                        if(!(teamNameplates[i].NamePlateNameGroup_mc.numChildren > 5 && teamNameplates[i].NamePlateNameGroup_mc.getChildAt(5) is TextField))
-                        {
-                           teamNameplates[i].Name_tf.text = "x" + teamNameplates[i].NamePlateNameGroup_mc.numChildren + " " + teamNameplates[i].NamePlateNameGroup_mc.getChildAt(teamNameplates[i].NamePlateNameGroup_mc.numChildren - 1);
-                           break;
-                        }
-                        hpBar = teamNameplates[i].NamePlateNameGroup_mc.getChildAt(5);
-                     }
-                     teamNameplates[i].Name_tf.text = markers[j].displayName.split(TITLE_DELIMITED)[0];
-                     hpBar.x = config != null ? config.markerX : -100;
-                     hpBar.y = config != null ? config.markerY : 50;
-                     hpBar.width = 200;
-                     hpBar.visible = true;
-                     hpBar.text = Number(markers[j].HPPct * 100).toFixed(1) + "%" + (markers[j].playerState == "potentialHostile" ? (config != null ? config.markerPvp : "\t\tpvpOn") : "");
-                     teamNameplates[i].NamePlateNameGroup_mc.graphics.clear();
-                     teamNameplates[i].NamePlateNameGroup_mc.graphics.beginFill(65280,1);
-                     teamNameplates[i].NamePlateNameGroup_mc.graphics.drawRect(-100,hpBar.y + 22,200 * markers[j].HPPct,3);
-                     teamNameplates[i].NamePlateNameGroup_mc.graphics.endFill();
-                     teamNameplates[i].NamePlateNameGroup_mc.graphics.beginFill(16711680);
-                     teamNameplates[i].NamePlateNameGroup_mc.graphics.drawRect(100,hpBar.y + 22,-200 * markers[j].rads,3);
-                     teamNameplates[i].NamePlateNameGroup_mc.graphics.endFill();
-                     markers.splice(j,1);
-                     teamNameplates[i].NamePlateNameGroup_mc.visible = true;
-                     break;
+                     initTeamMarkerNumChildren = teamNameplates[i].NamePlateNameGroup_mc.numChildren;
                   }
-                  j++;
+                  if(teamNameplates[i].NamePlateNameGroup_mc.numChildren == initTeamMarkerNumChildren)
+                  {
+                     hpBar = new TextField();
+                     hpBar.setTextFormat(teamNameplates[i].Name_tf.getTextFormat());
+                     hpBar.filters = teamNameplates[i].Name_tf.filters;
+                     hpBar.visible = true;
+                     hpBar.width = 300;
+                     teamNameplates[i].NamePlateNameGroup_mc.addChild(hpBar);
+                  }
+                  else if(teamNameplates[i].NamePlateNameGroup_mc.numChildren > initTeamMarkerNumChildren)
+                  {
+                     hpBar = teamNameplates[i].NamePlateNameGroup_mc.getChildAt(initTeamMarkerNumChildren);
+                  }
+                  if(hpBar == null)
+                  {
+                     i++;
+                     continue;
+                  }
+                  if(config != null)
+                  {
+                     markerBarY = Number(config.markerBarY != null ? config.markerBarY : 50);
+                     markerBarX = Number(config.markerBarX != null ? config.markerBarX : 0);
+                     markerBarWidth = Number(config.markerBarWidth != null ? config.markerBarWidth : 200);
+                     markerBarHeight = Number(config.markerBarHeight != null ? config.markerBarHeight : 3);
+                  }
+                  else
+                  {
+                     markerBarY = 50;
+                     markerBarX = 0;
+                     markerBarWidth = 200;
+                     markerBarHeight = 3;
+                  }
+                  teamNameplates[i].NamePlateNameGroup_mc.graphics.clear();
+                  teamNameplates[i].NamePlateNameGroup_mc.graphics.beginFill(65280);
+                  teamNameplates[i].NamePlateNameGroup_mc.graphics.drawRect(-markerBarWidth / 2 + markerBarX,markerBarY,markerBarWidth * marker.HPPct,markerBarHeight);
+                  teamNameplates[i].NamePlateNameGroup_mc.graphics.endFill();
+                  teamNameplates[i].NamePlateNameGroup_mc.graphics.beginFill(16711680);
+                  teamNameplates[i].NamePlateNameGroup_mc.graphics.drawRect(markerBarWidth / 2 + markerBarX,markerBarY,-markerBarWidth * marker.rads,markerBarHeight);
+                  teamNameplates[i].NamePlateNameGroup_mc.graphics.endFill();
+                  teamNameplates[i].NamePlateNameGroup_mc.visible = true;
                }
                i++;
             }
+            this._lastOnTeamMarkersUpdate = getTimer() - t1;
          }
          catch(e:*)
          {
+            throw e;
          }
       }
       
@@ -548,7 +674,8 @@ package
          this.graphics.clear();
          this.players_index = 0;
          this.yOffset = 0;
-         for(p in players_tf)
+         var p:int = 0;
+         while(p < players_tf.length)
          {
             if(players_tf[p] != null)
             {
@@ -556,6 +683,7 @@ package
                players_tf[p].defaultTextFormat = this.textFormat;
                players_tf[p].setTextFormat(this.textFormat);
             }
+            p++;
          }
       }
       
@@ -768,19 +896,23 @@ package
       
       public function drawSeparators() : void
       {
-         for(s in separators)
+         var s:int = 0;
+         while(s < separators.length)
          {
             this.graphics.beginFill(separators[s].color);
             this.graphics.drawRect(config.x,separators[s].y,config.width,separators[s].height);
             this.graphics.endFill();
+            s++;
          }
       }
       
       public function formatPlayer(player:Object) : String
       {
          var textToDisplay:String = config.format;
-         for(f in config.formats)
+         var fi:int = 0;
+         while(fi < config.formats.Keys.length)
          {
+            var f:String = config.formats.Keys[fi];
             switch(f)
             {
                case SORT_BY_BOUNTY:
@@ -820,6 +952,7 @@ package
                   }
                   break;
             }
+            fi++;
          }
          return textToDisplay;
       }
@@ -833,7 +966,8 @@ package
                break;
             case SORT_BY_PROPERTY:
                var sortOptions:Array = new Array(config.sortOrder.length);
-               for(p in config.sortOrder)
+               var p:int = 0;
+               while(p < config.sortOrder.length)
                {
                   if(config.sortOrder[p] == SORT_BY_LEVEL || config.sortOrder[p] == SORT_BY_BOUNTY)
                   {
@@ -843,6 +977,7 @@ package
                   {
                      sortOptions[p] = Array.CASEINSENSITIVE;
                   }
+                  p++;
                }
                players = players.sortOn(config.sortOrder,sortOptions);
          }
@@ -855,8 +990,11 @@ package
       
       public function displayPlayers(players:Array) : void
       {
-         for each(player in players)
+         var p:int = 0;
+         var l:int = int(players.length);
+         while(p < l)
          {
+            var player:Object = players[p];
             if(this.isValidPlayerToShow(player))
             {
                var textToDisplay:String = this.formatPlayer(player);
@@ -864,8 +1002,8 @@ package
                var yDiff:Number = player.y - playerPosition.y;
                var xDiff:Number = player.x - playerPosition.x;
                var distance:int = int(getDistance(xDiff,yDiff) / MAP_DISTANCE_CONST);
-               var angle:* = Math.atan2(yDiff,xDiff);
-               var direction:* = getDirection(angle);
+               var angle:Number = Math.atan2(yDiff,xDiff);
+               var direction:String = getDirection(angle);
                var iangle:int = (360 - angle * RAD2DEG) % 360;
                var iangleCompass:int = (450 + angle * RAD2DEG) % 360;
                textToDisplay = textToDisplay.replace(STRING_ANGLE,iangle).replace(STRING_ANGLE_COMPASS,iangleCompass).replace(STRING_DIRECTION,direction).replace(STRING_DISTANCE,distance);
@@ -897,7 +1035,7 @@ package
                }
                if(config.vendorData.enabled)
                {
-                  var marker:* = campMarkers[player.name];
+                  var marker:Object = campMarkers[player.name];
                   if(marker != null && vendorData[marker.markerId] != null && vendorData[marker.markerId].length > 0)
                   {
                      yDiff = marker.y - playerPosition.y;
@@ -928,7 +1066,7 @@ package
                         }
                         while(i < config.vendorData.format.length)
                         {
-                           var vdata:* = formatVendingData(config.vendorData.format[i],vendorData[marker.markerId]);
+                           var vdata:String = formatVendingData(config.vendorData.format[i],vendorData[marker.markerId]);
                            if(vdata != "")
                            {
                               vdata = vdata.replace(STRING_ANGLE,iangle).replace(STRING_ANGLE_COMPASS,iangleCompass).replace(STRING_DIRECTION,direction).replace(STRING_DISTANCE,distance);
@@ -941,6 +1079,7 @@ package
                   }
                }
             }
+            p++;
          }
       }
       
@@ -973,9 +1112,10 @@ package
       public function displayPlayerList() : void
       {
          var t1:Number;
-         var t2:*;
          var dataField:String;
          var parts:Array;
+         var m:int;
+         var d:int;
          try
          {
             t1 = Number(getTimer());
@@ -992,7 +1132,8 @@ package
             }
             if(config.displayData && config.displayData.length > 0)
             {
-               for(d in config.displayData)
+               d = 0;
+               while(d < config.displayData.length)
                {
                   dataField = config.displayData[d];
                   parts = dataField.split(":");
@@ -1004,6 +1145,7 @@ package
                         displayMessage("PublicTeamsData: " + this.PublicTeamsData.data);
                         displayMessage("MapMenuData: " + this.MapMenuData.data);
                         displayMessage("campMarkers");
+                        m = 0;
                         for(m in this.campMarkers)
                         {
                            displayMessage(m + ":" + this.campMarkers[m]);
@@ -1037,6 +1179,9 @@ package
                         break;
                      case "showRenderTime":
                         displayMessage("RenderTime: " + this._lastRenderTime + "ms");
+                        displayMessage("TeamMarkersUpdate: " + this._lastOnTeamMarkersUpdate + "ms");
+                        displayMessage("TeamMarkersTimer: " + this._lastUpdateTeamMarkersTimer + "ms");
+                        displayMessage("children: " + this.initTeamMarkerNumChildren);
                         applyColor(dataField);
                         break;
                      case DATA_SEPARATOR:
@@ -1055,6 +1200,7 @@ package
                         }
                         break;
                   }
+                  d++;
                }
             }
             drawBackground();

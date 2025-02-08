@@ -47,9 +47,15 @@ package
          config.toggleVisibilityHotkey = Parser.parsePositiveNumber(config.toggleVisibilityHotkey,0);
          if(!config.formats)
          {
-            formats = {};
-            formats.bounty = config.formatBounty != null ? config.formatBounty : "({caps}c)";
+            config.formats = {};
+            config.formats.bounty = config.formatBounty != null ? config.formatBounty : "({caps}c)";
          }
+         var Keys:* = [];
+         for(f in config.formats)
+         {
+            Keys.push(f);
+         }
+         config.formats.Keys = Keys;
          if(!config.vendorData)
          {
             config.vendorData = {};
@@ -65,6 +71,12 @@ package
             {
                config.vendorData.formats = {};
             }
+            Keys = [];
+            for(f in config.vendorData.formats)
+            {
+               Keys.push(f);
+            }
+            config.vendorData.formats.Keys = Keys;
          }
          if(!config.sortOrder)
          {
