@@ -320,7 +320,7 @@ package
                      "enemyColor":GlobalFunc.COLOR_TEXT_ENEMY,
                      "nonEnemyColor":GlobalFunc.COLOR_TEXT_BODY,
                      "markerPvp":"\t\tpvpOn",
-                     "markerEnemy":" \t\tENEMY"
+                     "markerEnemy":"\t\tENEMY"
                   };
                   if(config != null)
                   {
@@ -356,7 +356,7 @@ package
                   hpBar.x = cfg.markerX;
                   hpBar.y = cfg.markerY;
                   text = "";
-                  if(marker.HPPct == 1)
+                  if(marker.HPPct > 0.999)
                   {
                      text += "100%";
                   }
@@ -368,7 +368,7 @@ package
                   {
                      text += " " + lastTeamMarkerDistance[teamNameplates[i].entityID];
                   }
-                  if(marker.playerState == "hostile" || marker.playerState == "hostileGroup" || marker.wantedState == "wanted" || marker.wantedState == "mostWanted")
+                  if(marker.playerState == "hostile" || marker.wantedState == "wanted" || marker.playerState == "hostileGroup" || marker.wantedState == "mostWanted")
                   {
                      text += cfg.markerEnemy;
                      hpBar.textColor = cfg.enemyColor;
@@ -730,6 +730,17 @@ package
          players_index++;
       }
       
+      public function removeLastMessage() : void
+      {
+         if(players_tf.length >= players_index && players_index > 0)
+         {
+            players_index--;
+            players_tf[players_index].visible = false;
+            players_tf[players_index].defaultTextFormat = this.textFormat;
+            players_tf[players_index].setTextFormat(this.textFormat);
+         }
+      }
+      
       public function drawBackground() : void
       {
          if(config.background)
@@ -1036,6 +1047,7 @@ package
                if(config.vendorData.enabled)
                {
                   var marker:Object = campMarkers[player.name];
+                  var hasVendorData:Boolean = false;
                   if(marker != null && vendorData[marker.markerId] != null && vendorData[marker.markerId].length > 0)
                   {
                      yDiff = marker.y - playerPosition.y;
@@ -1069,6 +1081,7 @@ package
                            var vdata:String = formatVendingData(config.vendorData.format[i],vendorData[marker.markerId]);
                            if(vdata != "")
                            {
+                              hasVendorData = true;
                               vdata = vdata.replace(STRING_ANGLE,iangle).replace(STRING_ANGLE_COMPASS,iangleCompass).replace(STRING_DIRECTION,direction).replace(STRING_DISTANCE,distance);
                               displayMessage(vdata);
                               LastDisplayPlayer.textColor = color;
@@ -1077,10 +1090,28 @@ package
                         }
                      }
                   }
+                  if(!hasVendorData && (config.vendorData.hidePlayersWithoutVendorData.indexOf(player.type) != -1 || hasAnyOfProperties(player,config.vendorData.hidePlayersWithoutVendorData)))
+                  {
+                     removeLastMessage();
+                  }
                }
             }
             p++;
          }
+      }
+      
+      private function hasAnyOfProperties(player:Object, props:Array) : Boolean
+      {
+         var i:int = 0;
+         while(i < props.length)
+         {
+            if(player[props[i]])
+            {
+               return true;
+            }
+            i++;
+         }
+         return false;
       }
       
       private function formatVendingData(format:String, vendorData:Array) : String
@@ -1181,7 +1212,6 @@ package
                         displayMessage("RenderTime: " + this._lastRenderTime + "ms");
                         displayMessage("TeamMarkersUpdate: " + this._lastOnTeamMarkersUpdate + "ms");
                         displayMessage("TeamMarkersTimer: " + this._lastUpdateTeamMarkersTimer + "ms");
-                        displayMessage("children: " + this.initTeamMarkerNumChildren);
                         applyColor(dataField);
                         break;
                      case DATA_SEPARATOR:

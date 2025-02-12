@@ -77,6 +77,10 @@ package
                Keys.push(f);
             }
             config.vendorData.formats.Keys = Keys;
+            if(!config.vendorData.hidePlayersWithoutVendorData)
+            {
+               config.vendorData.hidePlayersWithoutVendorData = [];
+            }
          }
          if(!config.sortOrder)
          {
