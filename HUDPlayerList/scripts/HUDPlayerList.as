@@ -196,22 +196,10 @@ package
       
       private var toggleVisibility:Boolean = false;
       
-      private var teamMarkersTimer:Timer;
-      
-      private var lastTeamMarkers:*;
-      
-      private var lastTeamMarkerDistance:*;
-      
-      private var initTeamMarkerNumChildren:int = 0;
-      
-      private var _lastOnTeamMarkersUpdate:Number = 0;
-      
-      private var _lastUpdateTeamMarkersTimer:Number = 0;
+      private var forceHide:Boolean = false;
       
       public function HUDPlayerList()
       {
-         this.lastTeamMarkerDistance = {};
-         this.lastTeamMarkers = {};
          this.visitedCamps = {};
          this.campMarkers = {};
          this.vendorData = {};
@@ -271,234 +259,6 @@ package
          return Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
       }
       
-      private function updateTeamMarkersTimer() : void
-      {
-         var teamNameplates:*;
-         var i:int;
-         var t1:Number;
-         var marker:*;
-         var hpBar:*;
-         var text:String;
-         try
-         {
-            t1 = Number(getTimer());
-            if(topLevel == null || topLevel.TeammateMarkerBase == null || topLevel.TeammateMarkerBase.TeamNameplates == null)
-            {
-               return;
-            }
-            if(config != null && Boolean(config.disableTimer))
-            {
-               return;
-            }
-            teamNameplates = topLevel.TeammateMarkerBase.TeamNameplates;
-            i = 0;
-            while(i < teamNameplates.length)
-            {
-               teamNameplates[i].isLocalPlayer = false;
-               teamNameplates[i].inLOS = true;
-               if(teamNameplates[i].hasOwnProperty("_Distance") && teamNameplates[i]._Distance > 0)
-               {
-                  lastTeamMarkerDistance[teamNameplates[i].entityID] = int(teamNameplates[i]._Distance);
-               }
-               teamNameplates[i].distance = 0;
-               marker = lastTeamMarkers[teamNameplates[i].entityID];
-               if(marker != null)
-               {
-                  if(marker.playerState == "hostile" || marker.playerState == "hostileGroup" || marker.wantedState == "wanted" || marker.wantedState == "mostWanted")
-                  {
-                     teamNameplates[i].playerState = "potentialHostile";
-                  }
-                  teamNameplates[i].displayName = marker.displayName;
-               }
-               if(teamNameplates[i].NamePlateNameGroup_mc.numChildren > initTeamMarkerNumChildren)
-               {
-                  hpBar = teamNameplates[i].NamePlateNameGroup_mc.getChildAt(initTeamMarkerNumChildren);
-                  cfg = {
-                     "markerX":-100,
-                     "markerY":50,
-                     "markerBarY":50,
-                     "enemyColor":GlobalFunc.COLOR_TEXT_ENEMY,
-                     "nonEnemyColor":GlobalFunc.COLOR_TEXT_BODY,
-                     "markerPvp":"\t\tpvpOn",
-                     "markerEnemy":"\t\tENEMY"
-                  };
-                  if(config != null)
-                  {
-                     if(config.markerX != null)
-                     {
-                        cfg.markerX = config.markerX;
-                     }
-                     if(config.markerY != null)
-                     {
-                        cfg.markerY = config.markerY;
-                     }
-                     if(config.markerBarY != null)
-                     {
-                        cfg.markerBarY = config.markerBarY;
-                     }
-                     if(config.enemyColor != null)
-                     {
-                        cfg.enemyColor = config.enemyColor;
-                     }
-                     if(config.nonEnemyColor != null)
-                     {
-                        cfg.nonEnemyColor = config.nonEnemyColor;
-                     }
-                     if(config.markerPvp != null)
-                     {
-                        cfg.markerPvp = config.markerPvp;
-                     }
-                     if(config.markerEnemy != null)
-                     {
-                        cfg.markerEnemy = config.markerEnemy;
-                     }
-                  }
-                  hpBar.x = cfg.markerX;
-                  hpBar.y = cfg.markerY;
-                  text = "";
-                  if(marker.HPPct > 0.999)
-                  {
-                     text += "100%";
-                  }
-                  else
-                  {
-                     text += Number(marker.HPPct * 100).toFixed(1) + "%";
-                  }
-                  if(lastTeamMarkerDistance[teamNameplates[i].entityID] != null)
-                  {
-                     text += " " + lastTeamMarkerDistance[teamNameplates[i].entityID];
-                  }
-                  if(marker.playerState == "hostile" || marker.wantedState == "wanted" || marker.playerState == "hostileGroup" || marker.wantedState == "mostWanted")
-                  {
-                     text += cfg.markerEnemy;
-                     hpBar.textColor = cfg.enemyColor;
-                  }
-                  else
-                  {
-                     if(marker.playerState == "potentialHostile")
-                     {
-                        text += cfg.markerPvp;
-                     }
-                     hpBar.textColor = cfg.nonEnemyColor;
-                  }
-                  hpBar.text = text;
-                  hpBar.visible = true;
-               }
-               teamNameplates[i].NamePlateNameGroup_mc.visible = true;
-               i++;
-            }
-            this._lastUpdateTeamMarkersTimer = getTimer() - t1;
-         }
-         catch(e:*)
-         {
-            throw e;
-         }
-      }
-      
-      private function onTeamMarkersUpdate(param1:FromClientDataEvent) : void
-      {
-         var teammateMarkerBase:*;
-         var teamNameplates:*;
-         var markers:*;
-         var i:int;
-         var j:int;
-         var hpBar:*;
-         var t1:Number;
-         var marker:*;
-         var markerBarY:Number;
-         var markerBarX:Number;
-         var markerBarWidth:Number;
-         var markerBarHeight:Number;
-         try
-         {
-            t1 = Number(getTimer());
-            if(!this.isHudMenu)
-            {
-               return;
-            }
-            teammateMarkerBase = this.topLevel.TeammateMarkerBase;
-            if(teammateMarkerBase == null)
-            {
-               return;
-            }
-            teamNameplates = teammateMarkerBase.TeamNameplates;
-            if(teamNameplates == null)
-            {
-               return;
-            }
-            if(param1.data.Markers == null)
-            {
-               return;
-            }
-            markers = param1.data.Markers.concat();
-            i = 0;
-            while(i < markers.length)
-            {
-               lastTeamMarkers[markers[i].entityID] = markers[i];
-               i++;
-            }
-            i = 0;
-            while(i < teamNameplates.length)
-            {
-               marker = lastTeamMarkers[teamNameplates[i].entityID];
-               if(marker != null)
-               {
-                  teamNameplates[i].NamePlateNameGroup_mc.visible = true;
-                  if(initTeamMarkerNumChildren == 0)
-                  {
-                     initTeamMarkerNumChildren = teamNameplates[i].NamePlateNameGroup_mc.numChildren;
-                  }
-                  if(teamNameplates[i].NamePlateNameGroup_mc.numChildren == initTeamMarkerNumChildren)
-                  {
-                     hpBar = new TextField();
-                     hpBar.setTextFormat(teamNameplates[i].Name_tf.getTextFormat());
-                     hpBar.filters = teamNameplates[i].Name_tf.filters;
-                     hpBar.visible = true;
-                     hpBar.width = 300;
-                     teamNameplates[i].NamePlateNameGroup_mc.addChild(hpBar);
-                  }
-                  else if(teamNameplates[i].NamePlateNameGroup_mc.numChildren > initTeamMarkerNumChildren)
-                  {
-                     hpBar = teamNameplates[i].NamePlateNameGroup_mc.getChildAt(initTeamMarkerNumChildren);
-                  }
-                  if(hpBar == null)
-                  {
-                     i++;
-                     continue;
-                  }
-                  if(config != null)
-                  {
-                     markerBarY = Number(config.markerBarY != null ? config.markerBarY : 50);
-                     markerBarX = Number(config.markerBarX != null ? config.markerBarX : 0);
-                     markerBarWidth = Number(config.markerBarWidth != null ? config.markerBarWidth : 200);
-                     markerBarHeight = Number(config.markerBarHeight != null ? config.markerBarHeight : 3);
-                  }
-                  else
-                  {
-                     markerBarY = 50;
-                     markerBarX = 0;
-                     markerBarWidth = 200;
-                     markerBarHeight = 3;
-                  }
-                  teamNameplates[i].NamePlateNameGroup_mc.graphics.clear();
-                  teamNameplates[i].NamePlateNameGroup_mc.graphics.beginFill(65280);
-                  teamNameplates[i].NamePlateNameGroup_mc.graphics.drawRect(-markerBarWidth / 2 + markerBarX,markerBarY,markerBarWidth * marker.HPPct,markerBarHeight);
-                  teamNameplates[i].NamePlateNameGroup_mc.graphics.endFill();
-                  teamNameplates[i].NamePlateNameGroup_mc.graphics.beginFill(16711680);
-                  teamNameplates[i].NamePlateNameGroup_mc.graphics.drawRect(markerBarWidth / 2 + markerBarX,markerBarY,-markerBarWidth * marker.rads,markerBarHeight);
-                  teamNameplates[i].NamePlateNameGroup_mc.graphics.endFill();
-                  teamNameplates[i].NamePlateNameGroup_mc.visible = true;
-               }
-               i++;
-            }
-            this._lastOnTeamMarkersUpdate = getTimer() - t1;
-         }
-         catch(e:*)
-         {
-            throw e;
-         }
-      }
-      
       public function addedToStageHandler(param1:Event) : *
       {
          this.topLevel = stage.getChildAt(0);
@@ -537,6 +297,10 @@ package
          if(event.keyCode == config.toggleVisibilityHotkey)
          {
             this.toggleVisibility = !this.toggleVisibility;
+         }
+         if(event.keyCode == config.forceHideHotkey)
+         {
+            this.forceHide = !this.forceHide;
          }
       }
       
@@ -1150,7 +914,7 @@ package
          try
          {
             t1 = Number(getTimer());
-            this.visible = this.isValidHUDMode() ^ this.toggleVisibility;
+            this.visible = !this.forceHide && this.isValidHUDMode() ^ this.toggleVisibility;
             if(!this.visible)
             {
                return;
@@ -1210,8 +974,6 @@ package
                         break;
                      case "showRenderTime":
                         displayMessage("RenderTime: " + this._lastRenderTime + "ms");
-                        displayMessage("TeamMarkersUpdate: " + this._lastOnTeamMarkersUpdate + "ms");
-                        displayMessage("TeamMarkersTimer: " + this._lastUpdateTeamMarkersTimer + "ms");
                         applyColor(dataField);
                         break;
                      case DATA_SEPARATOR:
