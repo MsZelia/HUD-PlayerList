@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.1.7";
+      public static const MOD_VERSION:String = "1.1.8";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -430,9 +430,10 @@ package
          this.dummy_tf.filters = [new DropShadowFilter(2,45,0,1,1,1,1,BitmapFilterQuality.HIGH)];
          this.alpha = config.alpha;
          this.blendMode = config.blendMode;
+         resetMessages(true);
       }
       
-      public function resetMessages() : void
+      public function resetMessages(setFormat:Boolean = false) : void
       {
          this.separators = [];
          this.graphics.clear();
@@ -444,8 +445,13 @@ package
             if(players_tf[p] != null)
             {
                players_tf[p].visible = false;
-               players_tf[p].defaultTextFormat = this.textFormat;
-               players_tf[p].setTextFormat(this.textFormat);
+               if(setFormat)
+               {
+                  players_tf[p].defaultTextFormat = this.textFormat;
+                  players_tf[p].setTextFormat(this.textFormat);
+                  players_tf[p].filters = Boolean(config.textShadow) ? this.dummy_tf.filters : [];
+                  players_tf[p].blendMode = config.textBlendMode;
+               }
             }
             p++;
          }
@@ -459,13 +465,17 @@ package
          tf.defaultTextFormat = this.textFormat;
          TextFieldEx.setTextAutoSize(tf,TextFieldEx.TEXTAUTOSZ_SHRINK);
          tf.setTextFormat(this.textFormat);
+         if(config)
+         {
+            tf.filters = Boolean(config.textShadow) ? this.dummy_tf.filters : [];
+            tf.blendMode = config.textBlendMode;
+         }
          addChild(tf);
          return tf;
       }
       
       public function applyConfig(tf:TextField) : void
       {
-         tf.visible = true;
          tf.x = config.x;
          tf.background = false;
          tf.width = config.width;
@@ -479,8 +489,7 @@ package
             tf.y = LastDisplayPlayer.y + LastDisplayPlayer.height + config.ySpacing + yOffset;
             yOffset = 0;
          }
-         tf.blendMode = config.textBlendMode;
-         tf.filters = Boolean(config.textShadow) ? this.dummy_tf.filters : [];
+         tf.visible = true;
       }
       
       public function displayMessage(text:String) : void
