@@ -452,6 +452,10 @@ package
                   players_tf[p].filters = Boolean(config.textShadow) ? this.dummy_tf.filters : [];
                   players_tf[p].blendMode = config.textBlendMode;
                }
+               else
+               {
+                  players_tf[p].textColor = config.textColor;
+               }
             }
             p++;
          }
