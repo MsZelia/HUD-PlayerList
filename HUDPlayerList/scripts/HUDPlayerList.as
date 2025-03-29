@@ -105,6 +105,8 @@ package
       
       private static const MAIN_MENU:String = "MainMenu";
       
+      private static const VENDING_CATEGORY_NAMES:Array = ["{APPAREL}","{ARMOR0}","{ARMOR1}","{ARMOR2}","{ARMOR3}","{WEAPON0}","{WEAPON1}","{WEAPON2}","{WEAPON3}","{MODS}","{STIMPAK}","{MEDS}","{FOOD}","{DRINK}","{AMMO}","{EXPLOSIVE}","{JUNK}","{PLAN}","{MISC}"];
+      
       private static const VENDING_CATEGORIES:* = {
          "{APPAREL}":0,
          "{ARMOR0}":1,
@@ -209,6 +211,7 @@ package
          addEventListener(Event.ADDED_TO_STAGE,this.addedToStageHandler);
          this.HUDModeData = BSUIDataManager.GetDataFromClient("HUDModeData");
          this.AccountInfoData = BSUIDataManager.GetDataFromClient("AccountInfoData");
+         this.CharacterInfoData = BSUIDataManager.GetDataFromClient("CharacterInfoData");
          this.PublicTeamsData = BSUIDataManager.GetDataFromClient("PublicTeamsData");
          this.MapMenuData = BSUIDataManager.GetDataFromClient("MapMenuData");
          this.configTimer = new Timer(CONFIG_RELOAD_TIME);
@@ -656,23 +659,32 @@ package
       
       public function displayGroup(groupName:*) : void
       {
+         var propType:int = 0;
+         switch(groupName)
+         {
+            case PLAYER_REMOTE:
+            case PLAYER_LOCAL:
+            case PLAYER_TEAM_LEADER:
+            case PLAYER_TEAM_MEMBER:
+            case PLAYER_WANTED:
+            case IS_HIDDEN:
+               propType = 1;
+               break;
+            case IS_FRIEND:
+            case IS_TEXTCHAT_USER:
+               propType = 2;
+         }
          filteredPlayers = _players.filter(function(player:Object):Boolean
          {
-            switch(groupName)
+            if(propType == 1)
             {
-               case PLAYER_REMOTE:
-               case PLAYER_LOCAL:
-               case PLAYER_TEAM_LEADER:
-               case PLAYER_TEAM_MEMBER:
-               case PLAYER_WANTED:
-               case IS_HIDDEN:
-                  return groupName == player.type;
-               case IS_FRIEND:
-               case IS_TEXTCHAT_USER:
-                  return player[groupName];
-               default:
-                  return true;
+               return groupName == player.type;
             }
+            if(propType == 2)
+            {
+               return player[groupName];
+            }
+            return true;
          });
          for each(fp in filteredPlayers)
          {
@@ -747,27 +759,27 @@ package
       
       public function sortPlayers(players:Array) : Array
       {
-         switch(config.sortBy)
+         if(config.sortBy == SORT_BY_CUSTOM)
          {
-            case SORT_BY_CUSTOM:
-               players.sort(customSort);
-               break;
-            case SORT_BY_PROPERTY:
-               var sortOptions:Array = new Array(config.sortOrder.length);
-               var p:int = 0;
-               while(p < config.sortOrder.length)
+            players.sort(customSort);
+         }
+         else if(config.sortBy == SORT_BY_PROPERTY)
+         {
+            var sortOptions:Array = new Array(config.sortOrder.length);
+            var p:int = 0;
+            while(p < config.sortOrder.length)
+            {
+               if(config.sortOrder[p] == SORT_BY_LEVEL || config.sortOrder[p] == SORT_BY_BOUNTY)
                {
-                  if(config.sortOrder[p] == SORT_BY_LEVEL || config.sortOrder[p] == SORT_BY_BOUNTY)
-                  {
-                     sortOptions[p] = Array.NUMERIC | Array.DESCENDING;
-                  }
-                  else
-                  {
-                     sortOptions[p] = Array.CASEINSENSITIVE;
-                  }
-                  p++;
+                  sortOptions[p] = Array.NUMERIC | Array.DESCENDING;
                }
-               players = players.sortOn(config.sortOrder,sortOptions);
+               else
+               {
+                  sortOptions[p] = Array.CASEINSENSITIVE;
+               }
+               p++;
+            }
+            players = players.sortOn(config.sortOrder,sortOptions);
          }
          if(config.reverseSort)
          {
@@ -899,7 +911,7 @@ package
          }
          var textToDisplay:String = format;
          var hasData:Boolean = false;
-         for(cat in VENDING_CATEGORIES)
+         for each(cat in VENDING_CATEGORY_NAMES)
          {
             if(textToDisplay.indexOf(cat) != -1)
             {
@@ -1021,10 +1033,6 @@ package
       
       public function getPlayers() : Array
       {
-         if(!this.CharacterInfoData)
-         {
-            this.CharacterInfoData = BSUIDataManager.GetDataFromClient("CharacterInfoData");
-         }
          if(!this.AccountInfoData.data || !this.CharacterInfoData.data)
          {
             return;
@@ -1037,52 +1045,42 @@ package
          {
             for each(marker in this.MapMenuData.data.MarkerData)
             {
-               switch(marker.markerType)
+               if(marker.playerLevel > 0)
                {
-                  case PLAYER_LOCAL:
-                     players.push({
-                        "name":this.AccountInfoData.data.name,
-                        "type":marker.markerType,
-                        "level":this.CharacterInfoData.data.level,
-                        "bounty":this.CharacterInfoData.data.bounty,
-                        "x":marker.x,
-                        "y":marker.y
-                     });
-                     playerPosition = {
-                        "x":marker.x,
-                        "y":marker.y
-                     };
-                     break;
-                  case PLAYER_REMOTE:
-                  case PLAYER_TEAM_MEMBER:
-                  case PLAYER_TEAM_LEADER:
-                  case PLAYER_WANTED:
-                  case "PlayerRemote_Friend":
-                  case "PlayerRemote_PVP":
-                  case "BabylonSpawnMarkerPlayer":
-                  case "BabylonSpawnMarkerTeam":
-                     playerName = marker.text.split(TITLE_DELIMITED)[0];
-                     players.push({
-                        "name":playerName,
-                        "type":marker.markerType,
-                        "level":marker.playerLevel,
-                        "bounty":marker.bounty,
-                        "isFriend":marker.isFriend,
-                        "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false),
-                        "x":marker.x,
-                        "y":marker.y
-                     });
-                     break;
-                  case CAMP_MARKER:
-                     if(marker.isVending)
-                     {
-                        _campMarkers[marker.owningPlayerName.split(TITLE_DELIMITED)[0]] = {
-                           "markerId":marker.markerID,
-                           "x":marker.x,
-                           "y":marker.y
-                        };
-                     }
-                     break;
+                  playerName = marker.text.split(TITLE_DELIMITED)[0];
+                  players.push({
+                     "name":playerName,
+                     "type":marker.markerType,
+                     "level":marker.playerLevel,
+                     "bounty":marker.bounty,
+                     "isFriend":marker.isFriend,
+                     "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false),
+                     "x":marker.x,
+                     "y":marker.y
+                  });
+               }
+               else if(marker.isVending)
+               {
+                  _campMarkers[marker.owningPlayerName.split(TITLE_DELIMITED)[0]] = {
+                     "markerId":marker.markerID,
+                     "x":marker.x,
+                     "y":marker.y
+                  };
+               }
+               else if(marker.markerType == PLAYER_LOCAL)
+               {
+                  players.push({
+                     "name":this.AccountInfoData.data.name,
+                     "type":marker.markerType,
+                     "level":this.CharacterInfoData.data.level,
+                     "bounty":this.CharacterInfoData.data.bounty,
+                     "x":marker.x,
+                     "y":marker.y
+                  });
+                  playerPosition = {
+                     "x":marker.x,
+                     "y":marker.y
+                  };
                }
             }
          }
