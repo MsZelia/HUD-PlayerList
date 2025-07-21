@@ -274,6 +274,8 @@ package
       
       public function addedToStageHandler(param1:Event) : *
       {
+         removeEventListener(Event.ADDED_TO_STAGE,this.addedToStageHandler);
+         addEventListener(Event.REMOVED_TO_STAGE,this.removedFromStageHandler);
          this.topLevel = stage.getChildAt(0);
          if(Boolean(this.topLevel))
          {
@@ -297,6 +299,26 @@ package
             ShowHUDMessage("Not added to stage: " + getQualifiedClassName(this.topLevel));
          }
          stage.addEventListener(KeyboardEvent.KEY_DOWN,this.keyDownHandler);
+      }
+      
+      public function removedFromStageHandler(param1:Event) : *
+      {
+         if(stage)
+         {
+            stage.removeEventListener(KeyboardEvent.KEY_DOWN,this.keyDownHandler);
+         }
+         if(this.configTimer)
+         {
+            this.configTimer.removeEventListener(TimerEvent.TIMER,this.loadConfig);
+         }
+         if(this.displayTimer)
+         {
+            this.displayTimer.removeEventListener(TimerEvent.TIMER,this.displayPlayerList);
+         }
+         if(this.hudtools)
+         {
+            this.hudtools.Shutdown();
+         }
       }
       
       public function onBuildMenu(parentItem:String = null) : *
@@ -408,6 +430,7 @@ package
                {
                   ShowHUDMessage("Error loading config: " + e);
                }
+               loader.removeEventListener(Event.COMPLETE,loaderComplete);
             };
             url = new URLRequest(CONFIG_FILE);
             loader = new URLLoader();
