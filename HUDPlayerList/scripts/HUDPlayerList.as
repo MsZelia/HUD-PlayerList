@@ -218,14 +218,14 @@ package
          this.players_tf = [];
          this.separators = [];
          super();
-         addEventListener(Event.ADDED_TO_STAGE,this.addedToStageHandler);
+         addEventListener(Event.ADDED_TO_STAGE,this.addedToStageHandler,false,0,true);
          this.HUDModeData = BSUIDataManager.GetDataFromClient("HUDModeData");
          this.AccountInfoData = BSUIDataManager.GetDataFromClient("AccountInfoData");
          this.CharacterInfoData = BSUIDataManager.GetDataFromClient("CharacterInfoData");
          this.PublicTeamsData = BSUIDataManager.GetDataFromClient("PublicTeamsData");
          this.MapMenuData = BSUIDataManager.GetDataFromClient("MapMenuData");
          this.configTimer = new Timer(CONFIG_RELOAD_TIME);
-         this.configTimer.addEventListener(TimerEvent.TIMER,this.loadConfig);
+         this.configTimer.addEventListener(TimerEvent.TIMER,this.loadConfig,false,0,true);
          this.configTimer.start();
       }
       
@@ -275,7 +275,7 @@ package
       public function addedToStageHandler(param1:Event) : *
       {
          removeEventListener(Event.ADDED_TO_STAGE,this.addedToStageHandler);
-         addEventListener(Event.REMOVED_TO_STAGE,this.removedFromStageHandler);
+         addEventListener(Event.REMOVED_FROM_STAGE,this.removedFromStageHandler,false,0,true);
          this.topLevel = stage.getChildAt(0);
          if(Boolean(this.topLevel))
          {
@@ -298,11 +298,12 @@ package
             trace(MOD_NAME + " not added to stage: " + getQualifiedClassName(this.topLevel));
             ShowHUDMessage("Not added to stage: " + getQualifiedClassName(this.topLevel));
          }
-         stage.addEventListener(KeyboardEvent.KEY_DOWN,this.keyDownHandler);
+         stage.addEventListener(KeyboardEvent.KEY_DOWN,this.keyDownHandler,false,0,true);
       }
       
       public function removedFromStageHandler(param1:Event) : *
       {
+         removeEventListener(Event.REMOVED_FROM_STAGE,this.removedFromStageHandler);
          if(stage)
          {
             stage.removeEventListener(KeyboardEvent.KEY_DOWN,this.keyDownHandler);
@@ -429,22 +430,18 @@ package
                }
                catch(e:Error)
                {
-                  ShowHUDMessage("Error loading config: " + e);
+                  ShowHUDMessage("Error parsing config: " + e);
                }
-               loader.removeEventListener(Event.COMPLETE,loaderComplete);
-               loader.removeEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
             };
-            ioErrorHandler = function(param1:Event):void
+            ioErrorHandler = function(param1:*):void
             {
-               displayMessage(FULL_MOD_NAME + " | Error loading config :: " + param1.text,0);
-               loader.removeEventListener(Event.COMPLETE,loaderComplete);
-               loader.removeEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+               ShowHUDMessage("Error loading config: " + param1.text);
             };
             url = new URLRequest(CONFIG_FILE);
             loader = new URLLoader();
             loader.load(url);
-            loader.addEventListener(Event.COMPLETE,loaderComplete);
-            loader.addEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+            loader.addEventListener(Event.COMPLETE,loaderComplete,false,0,true);
+            loader.addEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler,false,0,true);
          }
          catch(e:Error)
          {
@@ -475,7 +472,7 @@ package
             this.displayTimer.removeEventListener(TimerEvent.TIMER,this.displayPlayerList);
          }
          this.displayTimer = new Timer(config.refresh);
-         this.displayTimer.addEventListener(TimerEvent.TIMER,this.displayPlayerList);
+         this.displayTimer.addEventListener(TimerEvent.TIMER,this.displayPlayerList,false,0,true);
          this.displayTimer.start();
       }
       
