@@ -135,6 +135,8 @@ package
       
       private static const LOCALIZED_HEADINGS:* = ["$Compass_West","$Compass_North","$Compass_East","$Compass_South"];
       
+      private static const HUDTOOLS_MENU_TOGGLE_VENDORS:String = MOD_NAME + "_TOGGLE_VENDORS";
+      
       private static const HUDTOOLS_MENU_TOGGLE_VISIBILITY:String = MOD_NAME + "_TOGGLE_VISIBILITY";
       
       private static const HUDTOOLS_MENU_HIDE:String = MOD_NAME + "_HIDE";
@@ -205,6 +207,8 @@ package
       private var forceHide:Boolean = false;
       
       private var hudTools:SharedHUDTools;
+      
+      private var toggleVendors:Boolean = false;
       
       public function HUDPlayerList()
       {
@@ -301,8 +305,9 @@ package
          {
             if(parentItem == MOD_NAME)
             {
-               this.hudTools.AddMenuItem(HUDTOOLS_MENU_TOGGLE_VISIBILITY,"Toggle Visible",true,false,500);
-               this.hudTools.AddMenuItem(HUDTOOLS_MENU_HIDE,"Force Hide",true,false,500);
+               this.hudTools.AddMenuItem(HUDTOOLS_MENU_TOGGLE_VENDORS,"Hide Vendors",true,false,250);
+               this.hudTools.AddMenuItem(HUDTOOLS_MENU_TOGGLE_VISIBILITY,"Toggle Visible",true,false,250);
+               this.hudTools.AddMenuItem(HUDTOOLS_MENU_HIDE,"Force Hide",true,false,250);
             }
          }
          catch(e:Error)
@@ -312,7 +317,11 @@ package
       
       public function onSelectMenu(selectItem:String) : *
       {
-         if(selectItem == HUDTOOLS_MENU_TOGGLE_VISIBILITY)
+         if(selectItem == HUDTOOLS_MENU_TOGGLE_VENDORS)
+         {
+            this.toggleVendors = !this.toggleVendors;
+         }
+         else if(selectItem == HUDTOOLS_MENU_TOGGLE_VISIBILITY)
          {
             this.toggleVisibility = !this.toggleVisibility;
          }
@@ -872,7 +881,7 @@ package
                {
                   applyColor(player.type);
                }
-               if(config.vendorData.enabled)
+               if(config.vendorData.enabled && !this.toggleVendors)
                {
                   var marker:Object = campMarkers[player.name];
                   var hasVendorData:Boolean = false;
