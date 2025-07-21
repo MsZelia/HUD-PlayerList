@@ -403,6 +403,7 @@ package
       public function loadConfig() : void
       {
          var loaderComplete:Function;
+         var ioErrorHandler:Function;
          var url:URLRequest = null;
          var loader:URLLoader = null;
          try
@@ -431,11 +432,19 @@ package
                   ShowHUDMessage("Error loading config: " + e);
                }
                loader.removeEventListener(Event.COMPLETE,loaderComplete);
+               loader.removeEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
+            };
+            ioErrorHandler = function(param1:Event):void
+            {
+               displayMessage(FULL_MOD_NAME + " | Error loading config :: " + param1.text,0);
+               loader.removeEventListener(Event.COMPLETE,loaderComplete);
+               loader.removeEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
             };
             url = new URLRequest(CONFIG_FILE);
             loader = new URLLoader();
             loader.load(url);
             loader.addEventListener(Event.COMPLETE,loaderComplete);
+            loader.addEventListener(IOErrorEvent.IO_ERROR,ioErrorHandler);
          }
          catch(e:Error)
          {
