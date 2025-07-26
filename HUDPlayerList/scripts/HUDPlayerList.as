@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.2.0";
+      public static const MOD_VERSION:String = "1.2.1";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -142,7 +142,6 @@ package
       private static const HUDTOOLS_MENU_HIDE:String = MOD_NAME + "_HIDE";
       
       private static var HEADINGS:* = [];
-       
       
       private var _lastConfigUpdateTime:Number = 0;
       
@@ -170,13 +169,13 @@ package
       
       private var MapMenuData:*;
       
-      private var vendorData:*;
+      private var vendorData:* = {};
       
-      private var campMarkers:*;
+      private var campMarkers:* = {};
       
       private var playerPosition:*;
       
-      private var visitedCamps:*;
+      private var visitedCamps:* = {};
       
       private var _players:Array;
       
@@ -184,7 +183,7 @@ package
       
       private var _textChatUsers:Array;
       
-      private var players_tf:Array;
+      private var players_tf:Array = [];
       
       private var players_index:int = 0;
       
@@ -192,7 +191,7 @@ package
       
       private var yOffset:Number = 0;
       
-      private var separators:Array;
+      private var separators:Array = [];
       
       private var maxServerPlayers:uint = 0;
       
@@ -212,11 +211,6 @@ package
       
       public function HUDPlayerList()
       {
-         this.visitedCamps = {};
-         this.campMarkers = {};
-         this.vendorData = {};
-         this.players_tf = [];
-         this.separators = [];
          super();
          addEventListener(Event.ADDED_TO_STAGE,this.addedToStageHandler,false,0,true);
          this.HUDModeData = BSUIDataManager.GetDataFromClient("HUDModeData");
@@ -224,9 +218,6 @@ package
          this.CharacterInfoData = BSUIDataManager.GetDataFromClient("CharacterInfoData");
          this.PublicTeamsData = BSUIDataManager.GetDataFromClient("PublicTeamsData");
          this.MapMenuData = BSUIDataManager.GetDataFromClient("MapMenuData");
-         this.configTimer = new Timer(CONFIG_RELOAD_TIME);
-         this.configTimer.addEventListener(TimerEvent.TIMER,this.loadConfig,false,0,true);
-         this.configTimer.start();
       }
       
       public static function toString(param1:Object) : String
@@ -290,6 +281,8 @@ package
                this.isHudMenu = false;
                BSUIDataManager.Subscribe("MenuStackData",this.updateIsMainMenu);
             }
+            this.initConfigTimer();
+            this.loadConfig();
             BSUIDataManager.Subscribe("RecentActivitiesData",this.onRecentActivitiesDataUpdate);
             trace(MOD_NAME + " added to stage: " + getQualifiedClassName(this.topLevel));
          }
@@ -303,6 +296,8 @@ package
       
       public function removedFromStageHandler(param1:Event) : *
       {
+         BSUIDataManager.Unsubscribe("MenuStackData",this.updateIsMainMenu);
+         BSUIDataManager.Unsubscribe("RecentActivitiesData",this.onRecentActivitiesDataUpdate);
          removeEventListener(Event.REMOVED_FROM_STAGE,this.removedFromStageHandler);
          if(stage)
          {
@@ -320,6 +315,13 @@ package
          {
             this.hudtools.Shutdown();
          }
+      }
+      
+      public function initConfigTimer() : void
+      {
+         this.configTimer = new Timer(CONFIG_RELOAD_TIME);
+         this.configTimer.addEventListener(TimerEvent.TIMER,this.loadConfig,false,0,true);
+         this.configTimer.start();
       }
       
       public function onBuildMenu(parentItem:String = null) : *
@@ -340,17 +342,23 @@ package
       
       public function onSelectMenu(selectItem:String) : *
       {
-         if(selectItem == HUDTOOLS_MENU_TOGGLE_VENDORS)
+         try
          {
-            this.toggleVendors = !this.toggleVendors;
+            if(selectItem == HUDTOOLS_MENU_TOGGLE_VENDORS)
+            {
+               this.toggleVendors = !this.toggleVendors;
+            }
+            else if(selectItem == HUDTOOLS_MENU_TOGGLE_VISIBILITY)
+            {
+               this.toggleVisibility = !this.toggleVisibility;
+            }
+            else if(selectItem == HUDTOOLS_MENU_HIDE)
+            {
+               this.forceHide = !this.forceHide;
+            }
          }
-         else if(selectItem == HUDTOOLS_MENU_TOGGLE_VISIBILITY)
+         catch(e:Error)
          {
-            this.toggleVisibility = !this.toggleVisibility;
-         }
-         else if(selectItem == HUDTOOLS_MENU_HIDE)
-         {
-            this.forceHide = !this.forceHide;
          }
       }
       
@@ -376,29 +384,43 @@ package
       
       private function updateIsMainMenu(event:FromClientDataEvent) : void
       {
-         this.isInMainMenu = event.data && event.data.menuStackA && event.data.menuStackA.some(function(x:*):*
+         try
          {
-            return x.menuName == MAIN_MENU;
-         });
-         if(this.isInMainMenu)
+            this.isInMainMenu = Boolean(event) && Boolean(event.data) && Boolean(event.data.menuStackA) && Boolean(event.data.menuStackA.some(function(x:*):*
+            {
+               return x.menuName == MAIN_MENU;
+            }));
+            if(this.isInMainMenu)
+            {
+               this.maxServerPlayers = 0;
+            }
+         }
+         catch(e:Error)
          {
-            this.maxServerPlayers = 0;
          }
       }
       
       private function onRecentActivitiesDataUpdate(event:FromClientDataEvent) : void
       {
-         var vendors:* = {};
-         var i:int = 0;
-         while(i < event.data.recentActivities.length)
+         var vendors:*;
+         var i:int;
+         try
          {
-            if(event.data.recentActivities[i].type == 3)
+            vendors = {};
+            i = 0;
+            while(i < event.data.recentActivities.length)
             {
-               vendors[event.data.recentActivities[i].mapMarkerId] = event.data.recentActivities[i].vendingCategoryCounts;
+               if(event.data.recentActivities[i].type == 3)
+               {
+                  vendors[event.data.recentActivities[i].mapMarkerId] = event.data.recentActivities[i].vendingCategoryCounts;
+               }
+               i++;
             }
-            i++;
+            this.vendorData = vendors;
          }
-         this.vendorData = vendors;
+         catch(e:Error)
+         {
+         }
       }
       
       public function loadConfig() : void
@@ -589,14 +611,14 @@ package
          }
          applyConfig(players_tf[players_index]);
          players_tf[players_index].text = text;
-         players_index++;
+         ++players_index;
       }
       
       public function removeLastMessage() : void
       {
          if(players_tf.length >= players_index && players_index > 0)
          {
-            players_index--;
+            --players_index;
             players_tf[players_index].visible = false;
             players_tf[players_index].defaultTextFormat = this.textFormat;
             players_tf[players_index].setTextFormat(this.textFormat);
@@ -1021,7 +1043,7 @@ package
          try
          {
             t1 = Number(getTimer());
-            this.visible = !this.forceHide && this.isValidHUDMode() ^ this.toggleVisibility;
+            this.visible = !this.forceHide && Boolean(this.isValidHUDMode() ^ this.toggleVisibility);
             if(!this.visible)
             {
                return;
@@ -1278,3 +1300,4 @@ package
       }
    }
 }
+

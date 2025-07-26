@@ -5,12 +5,11 @@ package
    public class HUDPlayerListConfig
    {
       
+      private static var _config:Object;
+      
       public static const STATE_HIDDEN:String = "hidden";
       
       public static const STATE_SHOWN:String = "shown";
-      
-      private static var _config:Object;
-       
       
       public function HUDPlayerListConfig()
       {
@@ -179,3 +178,4 @@ package
       }
    }
 }
+
