@@ -93,6 +93,8 @@ package
       
       private static const STRING_DIRECTION:String = "{direction}";
       
+      private static const STRING_VENDOR_DATA:String = "{vendorData}";
+      
       private static const STRINGS_COORDINATES:* = [STRING_ANGLE,STRING_ANGLE_COMPASS,STRING_DISTANCE,STRING_DIRECTION];
       
       private static const TITLE_HUDMENU:String = "HUDMenu";
@@ -932,6 +934,7 @@ package
                }
                displayMessage(textToDisplay);
                var colorApplied:Boolean = false;
+               var isVendorDataInLine:Boolean = false;
                if(player.type == PLAYER_WANTED)
                {
                   colorApplied = applyColor(PLAYER_WANTED);
@@ -948,6 +951,9 @@ package
                {
                   applyColor(player.type);
                }
+               var color:Number = LastDisplayPlayer.textColor;
+               var vendorDataString:String = "";
+               var indexOfVendorDataInFormat:int = int(LastDisplayPlayer.text.indexOf(STRING_VENDOR_DATA));
                if(config.vendorData.enabled && !this.toggleVendors)
                {
                   var marker:Object = campMarkers[player.name];
@@ -970,7 +976,7 @@ package
                         var i:int = 0;
                         if(visitedCamps[player.name] && config.customColors["visitedCamp"] != null)
                         {
-                           var color:Number = Number(config.customColors["visitedCamp"]);
+                           color = Number(config.customColors["visitedCamp"]);
                         }
                         else if(Boolean(config.vendorData.usePlayerColor))
                         {
@@ -987,17 +993,37 @@ package
                            {
                               hasVendorData = true;
                               vdata = vdata.replace(STRING_ANGLE,iangle).replace(STRING_ANGLE_COMPASS,iangleCompass).replace(STRING_DIRECTION,direction).replace(STRING_DISTANCE,distance);
-                              displayMessage(vdata);
-                              LastDisplayPlayer.textColor = color;
+                              if(indexOfVendorDataInFormat != -1)
+                              {
+                                 isVendorDataInLine = true;
+                                 vendorDataString += vdata;
+                              }
+                              else
+                              {
+                                 displayMessage(vdata);
+                                 LastDisplayPlayer.textColor = color;
+                              }
                            }
                            i++;
                         }
                      }
                   }
-                  if(!hasVendorData && (config.vendorData.hidePlayersWithoutVendorData.indexOf(player.type) != -1 || hasAnyOfProperties(player,config.vendorData.hidePlayersWithoutVendorData)))
+                  if(isVendorDataInLine)
+                  {
+                     var lenAfterVendorDataInFormat:int = LastDisplayPlayer.text.length - LastDisplayPlayer.text.indexOf(STRING_VENDOR_DATA) + STRING_VENDOR_DATA.length + 1;
+                     LastDisplayPlayer.text = LastDisplayPlayer.text.replace(STRING_VENDOR_DATA,vendorDataString);
+                     var frmt:TextFormat = new TextFormat();
+                     frmt.color = color;
+                     LastDisplayPlayer.setTextFormat(frmt,indexOfVendorDataInFormat,indexOfVendorDataInFormat + vendorDataString.length);
+                  }
+                  else if(!hasVendorData && (config.vendorData.hidePlayersWithoutVendorData.indexOf(player.type) != -1 || hasAnyOfProperties(player,config.vendorData.hidePlayersWithoutVendorData)))
                   {
                      removeLastMessage();
                   }
+               }
+               if(!hasVendorData && LastDisplayPlayer.text.indexOf(STRING_VENDOR_DATA) != -1)
+               {
+                  LastDisplayPlayer.text = LastDisplayPlayer.text.replace(STRING_VENDOR_DATA,"");
                }
             }
             p++;
