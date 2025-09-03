@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.2.1";
+      public static const MOD_VERSION:String = "1.2.2";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -212,6 +212,8 @@ package
       private var hudTools:SharedHUDTools;
       
       private var toggleVendors:Boolean = false;
+      
+      private var lastLevelData:* = {};
       
       public function HUDPlayerList()
       {
@@ -1174,14 +1176,20 @@ package
       
       public function getPlayers() : Array
       {
+         var players:Array;
+         var playerName:String;
+         var _campMarkers:*;
+         var currentPlayer:Object;
+         var currentPlayersFilter:Array;
+         var exists:Boolean;
          if(!this.AccountInfoData.data || !this.CharacterInfoData.data)
          {
             return;
          }
          this._textChatUsers = this.getTextChatUserList();
-         var players:Array = [];
-         var playerName:String = "";
-         var _campMarkers:* = {};
+         players = [];
+         playerName = "";
+         _campMarkers = {};
          if(this.MapMenuData && this.MapMenuData.data && this.MapMenuData.data.MarkerData)
          {
             for each(marker in this.MapMenuData.data.MarkerData)
@@ -1189,24 +1197,63 @@ package
                if(marker.playerLevel > 0)
                {
                   playerName = marker.text.split(TITLE_DELIMITED)[0];
-                  players.push({
-                     "name":playerName,
-                     "type":marker.markerType,
-                     "level":marker.playerLevel,
-                     "bounty":marker.bounty,
-                     "isFriend":marker.isFriend,
-                     "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false),
-                     "x":marker.x,
-                     "y":marker.y
+                  currentPlayersFilter = players.filter(function(x:Object):Boolean
+                  {
+                     return x.name == playerName;
                   });
+                  if(currentPlayersFilter.length == 1)
+                  {
+                     currentPlayer = currentPlayersFilter[0];
+                     currentPlayer.type = marker.markerType;
+                     currentPlayer.level = marker.playerLevel;
+                     currentPlayer.bounty = marker.bounty;
+                     currentPlayer.isFriend = marker.isFriend;
+                     currentPlayer.isTextChatUser = playerName.length > 0 ? isTextChatUser(playerName) : false;
+                     currentPlayer.x = marker.x;
+                     currentPlayer.y = marker.y;
+                  }
+                  else
+                  {
+                     players.push({
+                        "name":playerName,
+                        "type":marker.markerType,
+                        "level":marker.playerLevel,
+                        "bounty":marker.bounty,
+                        "isFriend":marker.isFriend,
+                        "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false),
+                        "x":marker.x,
+                        "y":marker.y
+                     });
+                  }
+                  lastLevelData[playerName] = marker.playerLevel;
                }
-               else if(marker.isVending)
+               else if(marker.markerType == CAMP_MARKER)
                {
-                  _campMarkers[marker.owningPlayerName.split(TITLE_DELIMITED)[0]] = {
-                     "markerId":marker.markerID,
-                     "x":marker.x,
-                     "y":marker.y
-                  };
+                  if(!marker.isLocalPlayersCamp)
+                  {
+                     playerName = marker.owningPlayerName.split(TITLE_DELIMITED)[0];
+                     if(players.filter(function(x:Object):Boolean
+                     {
+                        return x.name == playerName;
+                     }).length == 0)
+                     {
+                        players.push({
+                           "name":playerName,
+                           "type":IS_HIDDEN,
+                           "level":lastLevelData[playerName] || 0,
+                           "bounty":0,
+                           "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false)
+                        });
+                     }
+                     if(marker.isVending)
+                     {
+                        _campMarkers[marker.owningPlayerName.split(TITLE_DELIMITED)[0]] = {
+                           "markerId":marker.markerID,
+                           "x":marker.x,
+                           "y":marker.y
+                        };
+                     }
+                  }
                }
                else if(marker.markerType == PLAYER_LOCAL)
                {
@@ -1234,7 +1281,7 @@ package
                {
                   if(member.playerName.length > 0)
                   {
-                     var exists:Boolean = false;
+                     exists = false;
                      for each(player in players)
                      {
                         if(player.name == member.playerName)
@@ -1256,6 +1303,7 @@ package
                            "bounty":0,
                            "isTextChatUser":(member.playerName.length > 0 ? isTextChatUser(member.playerName) : false)
                         });
+                        lastLevelData[member.playerName] = member.playerLvl;
                      }
                   }
                }
