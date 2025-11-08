@@ -1,0 +1,230 @@
+{
+	// WIDGET SETTINGS
+	"x": 0,
+	"y": 160,
+	"anchor": "top", /* top, bottom (Update 1.0.8) */
+	"ySpacing": -7,
+	"width": 500,
+	"textSize": 18,
+	/* Some of the working fonts:
+	"$76HandwrittenNeat_Font", "$76HandwrittenIlliterate", "$BerlinDemi", "$BRODY",
+	"$Brush_Script_Std", "$ChowderHead", "$ConsoleFont", "$DebugTextFont", "$DotMatrix_Font",
+	"$evaScript_Font", "$Futura_Bold", "$HandwrittenFont", "$KiddieCocktails", "$Leiascript_Font",
+	"$MAIN_Font", "$MAIN_Font_Bold", "$MAIN_Font_Light", "$NixieTube_Font", "$Portico_Font_Regular",
+	"$Slate_Mobile", "$Terminal_Font", "$Typewriter_Font" */
+	"textFont": "$MAIN_Font",
+	"textAlign": "left", /* left, center, right */
+	"textColor": "0xffffff",
+	"textShadow": true, /* (Update 1.0.8) */
+	"background": false,
+	"backgroundColor": "0x222222",
+	/* alpha / backgroundAlpha:
+		0 = loads default value
+		0.0001 = transparent
+		0.0 < value < 1.0 = semi-transparent
+		1.0 = opaque */
+	/* HUD Opacity in settings can be changed so value of "alpha" can go over 1.0 (does not apply to "backgroundAlpha") */
+	"alpha": 1.0,
+	"backgroundAlpha": 0.5,
+	/* Blend modes:
+	add, alpha, darken, difference, erase, hardlight, invert, layer,
+	lighten, multiply, normal, overlay, screen, shader, subtract
+	https://help.adobe.com/en_US/FlashPlatform/reference/actionscript/3/flash/display/BlendMode.html */
+	"blendMode": "normal",
+	"textBlendMode": "normal",
+	
+	"disableRealTimeEdit": false, /* (Update 1.0.8) */
+	
+	
+	
+	// OVERLAY MOD LOADER ONLY SETTINGS - Improved Social Menu 1.0.4+
+	"debugKeys": false,
+	"toggleVisibilityHotkey": 107,
+	"forceHideHotkey": 109, // Update 1.1.7
+	
+	
+	
+	// PLAYER DISPLAY SETTINGS
+	"refresh": 1500,
+	
+	/* Format accepts:
+	{name}, {level}, {type} and "formats" strings:
+	{bounty}, {isFriend}, {isTextChatUser}, {isHidden}, {PlayerLocal},
+	{PlayerRemote}, {MostWanted} {TeamLeader}, {TeamMember}
+	Update 1.1.7: {distance}, {direction}, {angle}, {angleCompass}
+	
+	{bounty} accepts {caps} string
+	
+	Examples from images:
+	format: "{level}     \t{name} {bounty}", bounty: "({caps}c)"
+	format: "{name} {bounty}[{level}]", bounty: "({caps}c) "
+	
+	Another example with extended formats:
+	"format": "{MostWanted}{isHidden}{isFriend}{isTextChatUser} {name} {bounty}[{level}]",
+	"formats": {"MostWanted": "WANTED:", "bounty": "({caps}c)", "isHidden": "-.-",
+		"isFriend": "{F}", "isTextChatUser": "{+}" } */
+	
+	"format": "[{level}] {name}{PlayerLocal} {isHidden}{isFriend}{isTextChatUser}{bounty} {vendorData}",
+	"formats": {
+		"bounty": "({caps}c)",
+		"isHidden": "-.-",
+		"isFriend": "{F}",
+		"isTextChatUser": "{TC}",
+		"PlayerLocal": "[{characterName}]" // Update 1.1.6
+	},
+	
+	"vendorData": { // Update 1.1.5
+		"enabled": true,
+		"usePlayerColor": false,
+		"hideVisitedCamps": false, // Update 1.1.6
+		"hidePlayersWithoutVendorData": [], // Update 1.1.7, e.g. ["PlayerRemote", "isHidden"]
+		
+		/* Example format with distance, direction and angle:
+		"\t{distance} {direction}({angleCompass}°) |  {APPAREL}{EXPLOSIVE}{WEAPON2}{WEAPON3}{ARMOR2}{ARMOR3}{MODS}"
+		
+		Example format with all data:
+		"\tWeapon: {WEAPON0}{EXPLOSIVE}{WEAPON1}{WEAPON2}{WEAPON3}",
+		"\t{APPAREL}{ARMOR0}{ARMOR1}{ARMOR2}{ARMOR3}",
+		"\t{FOOD}{DRINK}{STIMPAK}{MEDS}{MISC}{JUNK}{PLAN}{AMMO}{MODS}"
+		 
+		 
+		 Update 1.2.1:
+		 Example format with in-line vendor data, needs {vendorData} in player "format" above
+		 "| Vend:{distance} {direction} | {APPAREL}{WEAPON2}{WEAPON3}{ARMOR2}{ARMOR3}{MODS}"
+		 */
+		"format": [
+			"| Vend:{distance} {direction} | {APPAREL}{WEAPON2}{WEAPON3}{ARMOR2}{ARMOR3}{MODS}"
+		],
+		"formats": {
+			"{APPAREL}": "Aprl[{value}] ",
+			"{ARMOR0}": "A[{value}] ",
+			"{ARMOR1}": "A¬[{value}] ",
+			"{ARMOR2}": "A¬¬[{value}] ",
+			"{ARMOR3}": "A¬¬¬[{value}] ",
+			"{WEAPON0}": "[{value}] ",
+			"{WEAPON1}": "¬[{value}] ",
+			"{WEAPON2}": "¬¬[{value}] ",
+			"{WEAPON3}": "¬¬¬[{value}] ",
+			"{MODS}": "Mod[{value}] ",
+			"{STIMPAK}": "Stim[{value}] ",
+			"{MEDS}": "Med[{value}] ",
+			"{FOOD}": "Food[{value}] ",
+			"{DRINK}": "Drink[{value}] ",
+			"{AMMO}": "Ammo[{value}] ",
+			"{EXPLOSIVE}": "Ex[{value}] ",
+			"{JUNK}": "Junk[{value}] ",
+			"{PLAN}": "Plan[{value}] ",
+			"{MISC}": "Misc[{value}] "
+		}
+	},
+	
+	"sortBy": "property",
+	/* sortBy options: default, custom, property
+	default: doesn't use sortOrder, lists latest players on bottom
+	custom: list player names or types which will be shown on top (in order)
+		example: ["MostWanted", "PlayerLocal" "PlayerRemote", "TeamLeader",
+			"TeamMember", "isHidden", "isTextChatUser", "isFriend"]
+	property: list property name(s) to sort by (name, level, type, bounty)
+		example: ["level, "name"] */
+	"sortOrder": [
+		"bounty",
+		"level",
+		"name"
+	],
+	"reverseSort": false, /* ascending <=> descending */
+	
+	/* Display data options:
+	"showVersion", "showHUDMode", "showElapsedTime", "showLastConfigUpdate", "showPlayerCount"
+	"showRenderTime" (Update 1.0.8)
+	"emptyspace:height"
+		examples: "emptyspace:5", "emptyspace:-5"
+	"separator:height:color" - color can also be specified as any customColors value
+		examples: "separator:1:0xffffff", "separator:3:isFriend"
+	"text:color:textToDisplay" - color can also be specified as any customColors value
+		examples: "text:0xffffff:My custom text", "text:MostWanted:Bounty list"
+	"group:groupName"
+		examples: "group:MostWanted", "group:isFriend"
+	Data will show in order in which it is listed here: */
+	"displayData": [
+		"showVersion",
+		"showHUDMode",
+		//"showRenderTime",
+		//"showElapsedTime",
+		//"showLastConfigUpdate",
+		"showPlayerCount",
+		//"separator:1:0xffffff",
+		"group:PlayerLocal",
+		// BOUNTIES
+		//"text:MostWanted:Bounties",
+		//"separator:1:MostWanted",
+		"group:MostWanted",
+		//"separator:1:MostWanted",
+		// FRIENDS
+		//"text:isFriend:{F} Friends/:",
+		"group:isFriend",
+		//"separator:1:isFriend",
+		// TEXT CHAT USERS
+		//"text:isTextChatUser:{+} Text chat users",
+		//"group:isTextChatUser",
+		//"separator:1:isTextChatUser",
+		// TEAM MEMBERS
+		//"text:TeamMember:Team",
+		//"group:TeamLeader",
+		//"group:TeamMember",
+		//"separator:1:TeamMember",
+		// OTHER PLAYERS NOT IN GROUP
+		"group:All"
+		// MORE DATA CAN GO HERE BELOW PLAYER LIST (don't forget commas)
+	],
+	
+	/* Custom color options:
+	"showVersion", "showHUDMode", "showElapsedTime", "showLastConfigUpdate", "showPlayerCount", "isServerFull",
+	"isFriend", "isTextChatUser", "isHidden", "PlayerLocal", "PlayerRemote", "MostWanted", "TeamLeader", "TeamMember"
+	Priority for player colors: Wanted > Friend > TextChat user > Type (local, remote, leader, member)
+	
+	Update 1.1.5: "vendorData"
+	Update 1.1.6: "visitedCamp"
+	*/
+	"customColors":	{
+		"showVersion": "0xff2222",
+		"showHUDMode": "0xffffff",
+		"showElapsedTime": "0xffaacc",
+		"showLastConfigUpdate": "0x77eeff",
+		"showPlayerCount": "0x77ff77",
+		"isServerFull": "0xff3333",
+		"isFriend": "0x33ff33",
+		"isTextChatUser": "0x2299cc",
+		"isHidden": "0xaaaaff",		// Player in expedition or stealth (while in public team)
+		"MostWanted": "0xff0000",	// Wanted players
+		"PlayerLocal": "0xff33cc",	// Your name color
+		"TeamLeader": "0xffbb00",
+		"TeamMember": "0xffff00",
+		"vendorData": "0xffff99",
+		"visitedCamp": "0xdd7777"
+	},
+	
+	"hideTypes": [
+	/* Options: "TeamLeader", "TeamMember", "MostWanted", "PlayerLocal" (you), "PlayerRemote" (other players), "isHidden" */
+	],
+	"hidePlayers": [
+		"player name 1",
+		"player name 2"
+	],
+	
+	/* HUD Modes:
+	"ActivateTypeMode", "All", "AutoVanity", "CampPlacement", "ContainerMode", "CrosshairAndActivateOnly",
+	"DeathRespawnMode", "DefaultScopeMenu", "DialogueMode", "EndOfMatch", "FurnitureEnterExit", "InsideMemory",
+	"InspectMode", "IronSights", "LegendaryPerksMode", "LockpickingMode", "MapMenu", "MessageMode",
+	"MovementDisabled", "NoHud", "PauseMode", "PerksMode", "Pipboy", "PowerArmor", "RadialMenu", "ScopeMenu",
+	"SelfieMode", "SitWaitMode", "SpectatorMode", "TerminalMode", "VATS", "VATSPlayback", "VertibirdMode",
+	"WorkshopMode",
+	"Loading", "MainMenu"
+	"Fishing"
+	
+	"All" is default HUD mode (non-power armor), not all of them */
+	"HUDModesState": "shown", /* Options: hidden, shown */
+	"HUDModes": [
+		"Loading",
+		"MapMenu"
+	]
+}
