@@ -1,6 +1,6 @@
 package
 {
-   import utils.Parser;
+   import utils.*;
    
    public class HUDPlayerListConfig
    {
@@ -43,8 +43,9 @@ package
          config.refresh = Parser.parseNumber(config.refresh,1000);
          config.format = Boolean(config.format) ? config.format : "[{level}] {name} {bounty}";
          config.sortBy = Boolean(config.sortBy) ? config.sortBy.toLowerCase() : "default";
-         config.toggleVisibilityHotkey = Parser.parsePositiveNumber(config.toggleVisibilityHotkey,0);
-         config.forceHideHotkey = Parser.parsePositiveNumber(config.forceHideHotkey,0);
+         config.toggleVisibilityHotkey = Buttons.parseValue(config.toggleVisibilityHotkey);
+         config.toggleVendorsHotkey = Buttons.parseValue(config.toggleVendorsHotkey);
+         config.forceHideHotkey = Buttons.parseValue(config.forceHideHotkey);
          if(!config.formats)
          {
             config.formats = {};
