@@ -15,7 +15,9 @@ package Shared
       
       public static const IRON_SIGHTS:String = "IronSights";
       
-      public static const SCOPE_MENU:String = "ScopeMenu";
+      public static const DEFAULT_SCOPE_MENU:String = "DefaultScopeMenu";
+      
+      public static const CAMERA_SCOPE_MENU:String = "CameraScopeMenu";
       
       public static const NO_HUD:String = "NoHud";
       
@@ -24,6 +26,8 @@ package Shared
       public static const INSIDE_MEMORY:String = "InsideMemory";
       
       public static const WORKSHOP_MODE:String = "WorkshopMode";
+      
+      public static const WORKSHOP_NO_CROSSHAIR_MODE:String = "WorkshopNoCrosshairMode";
       
       public static const CAMP_PLACEMENT:String = "CampPlacement";
       
@@ -64,6 +68,8 @@ package Shared
       public static const DIALOGUE_MODE:String = "DialogueMode";
       
       public static const LEGENDARY_PERKS_MODE:String = "LegendaryPerksMode";
+      
+      public static const FISHING_MODE:String = "Fishing";
       
       public function HUDModes()
       {
