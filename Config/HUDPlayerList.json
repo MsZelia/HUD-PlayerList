@@ -1,18 +1,18 @@
 {
 	// WIDGET SETTINGS
 	"x": 0,
-	"y": 160,
+	"y": 165,
 	"anchor": "top", /* top, bottom (Update 1.0.8) */
 	"ySpacing": -7,
 	"width": 500,
-	"textSize": 18,
+	"textSize": 17,
 	/* Some of the working fonts:
-	"$76HandwrittenNeat_Font", "$76HandwrittenIlliterate", "$BerlinDemi", "$BRODY",
-	"$Brush_Script_Std", "$ChowderHead", "$ConsoleFont", "$DebugTextFont", "$DotMatrix_Font",
-	"$evaScript_Font", "$Futura_Bold", "$HandwrittenFont", "$KiddieCocktails", "$Leiascript_Font",
-	"$MAIN_Font", "$MAIN_Font_Bold", "$MAIN_Font_Light", "$NixieTube_Font", "$Portico_Font_Regular",
-	"$Slate_Mobile", "$Terminal_Font", "$Typewriter_Font" */
-	"textFont": "$MAIN_Font",
+	"$76HandwrittenNeat_Font", "$76HandwrittenIlliterate", "$Adventure_Font", "$BerlinDemi", "$BRODY",
+	"$Brush_Script_Std", "$ChowderHead", "$ConsoleFont", "$DebugTextFont", "$DotMatrix_Font", "$evaScript_Font",
+	"$Futura_Bold", "$Futura_Bold_Oblique", "$Futura_Medium_Oblique", "$HandwrittenFont", "$KiddieCocktails",
+	"$Leiascript_Font", "$MAIN_Font", "$MAIN_Font_Bold", "$MAIN_Font_Light", "$NixieTube_Font",
+	"$Portico_Font_Regular", "$Slate_Mobile", "$Terminal_Font", "$Typewriter_Font" */
+	"textFont": "$MAIN_Font_Bold",
 	"textAlign": "left", /* left, center, right */
 	"textColor": "0xffffff",
 	"textShadow": true, /* (Update 1.0.8) */
@@ -39,8 +39,9 @@
 	
 	// OVERLAY MOD LOADER ONLY SETTINGS - Improved Social Menu 1.0.4+
 	"debugKeys": false,
-	"toggleVisibilityHotkey": 107,
-	"forceHideHotkey": 109, // Update 1.1.7
+	"toggleVisibilityHotkey": 0,
+	"forceHideHotkey": "N-", // Update 1.1.7
+	"toggleVendorsHotkey": "N*", // Update 1.2.3
 	
 	
 	
@@ -213,13 +214,14 @@
 	
 	/* HUD Modes:
 	"ActivateTypeMode", "All", "AutoVanity", "CampPlacement", "ContainerMode", "CrosshairAndActivateOnly",
-	"DeathRespawnMode", "DefaultScopeMenu", "DialogueMode", "EndOfMatch", "FurnitureEnterExit", "InsideMemory",
-	"InspectMode", "IronSights", "LegendaryPerksMode", "LockpickingMode", "MapMenu", "MessageMode",
-	"MovementDisabled", "NoHud", "PauseMode", "PerksMode", "Pipboy", "PowerArmor", "RadialMenu", "ScopeMenu",
-	"SelfieMode", "SitWaitMode", "SpectatorMode", "TerminalMode", "VATS", "VATSPlayback", "VertibirdMode",
-	"WorkshopMode",
-	"Loading", "MainMenu"
+	"DeathRespawnMode", "DialogueMode", "EndOfMatch", "FurnitureEnterExit", "InsideMemory", "InspectMode",
+	"IronSights", "LegendaryPerksMode", "LockpickingMode", "MapMenu", 	"MessageMode", "MovementDisabled",
+	"NoHud", "PauseMode", "PerksMode", "Pipboy", "PowerArmor", 	"RadialMenu", "SelfieMode", "SitWaitMode",
+	"SpectatorMode", "TerminalMode", "VATS", "VATSPlayback", "VertibirdMode", "WorkshopMode"
 	"Fishing"
+	"WorkshopNoCrosshairMode"
+	"DefaultScopeMenu", "CameraScopeMenu"
+	"Loading", "MainMenu"
 	
 	"All" is default HUD mode (non-power armor), not all of them */
 	"HUDModesState": "shown", /* Options: hidden, shown */
