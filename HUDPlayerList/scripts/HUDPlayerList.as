@@ -61,7 +61,7 @@ package
       
       private static const MAX_PLAYERS_PRIVATE:uint = 8;
       
-      private static const MAX_PLAYERS_PUBLIC:uint = 24;
+      private static const MAX_PLAYERS_PUBLIC:uint = 26;
       
       private static const SORT_BY_CUSTOM:String = "custom";
       
@@ -1164,7 +1164,7 @@ package
                         displayMessage("----------");
                         break;
                      case "showVersion":
-                        displayMessage(FULL_MOD_NAME + (this.isHudMenu ? "" : " (non-HUD)"));
+                        displayMessage(FULL_MOD_NAME + (this.isHudMenu ? "" : " (Overlay)"));
                         applyColor(dataField);
                         break;
                      case "showLastConfigUpdate":
@@ -1181,7 +1181,7 @@ package
                         break;
                      case "showPlayerCount":
                         displayMessage("Players: " + _playerCount + "/" + maxServerPlayers);
-                        applyColor(_playerCount >= maxServerPlayers ? IS_SERVER_FULL : dataField);
+                        applyColor(_playerCount >= 0.9 * maxServerPlayers ? IS_SERVER_FULL : dataField);
                         break;
                      case "showRenderTime":
                         displayMessage("RenderTime: " + this._lastRenderTime + "ms");
