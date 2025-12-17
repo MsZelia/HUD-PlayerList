@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.2.3";
+      public static const MOD_VERSION:String = "1.2.4";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -133,7 +133,7 @@ package
       
       private static const RAD2DEG:Number = 180 / Math.PI;
       
-      private static const MAP_DISTANCE_CONST:Number = 1 / 4096;
+      private static const MAP_DISTANCE_CONST:Number = 4096;
       
       private static const LOCALIZED_HEADINGS:* = ["$Compass_West","$Compass_North","$Compass_East","$Compass_South"];
       
@@ -837,23 +837,43 @@ package
             case IS_TEXTCHAT_USER:
                propType = 2;
          }
-         filteredPlayers = _players.filter(function(player:Object):Boolean
+         var filteredPlayers:Array = [];
+         var i:int = 0;
+         if(propType == 1)
          {
-            if(propType == 1)
+            while(i < _players.length)
             {
-               return groupName == player.type;
+               if(groupName == _players[i].type)
+               {
+                  filteredPlayers.push(_players[i]);
+                  _players.splice(i,1);
+               }
+               else
+               {
+                  i++;
+               }
             }
-            if(propType == 2)
-            {
-               return player[groupName];
-            }
-            return true;
-         });
-         for each(fp in filteredPlayers)
-         {
-            _players.splice(_players.indexOf(fp),1);
          }
-         filteredPlayers = sortPlayers(filteredPlayers);
+         else if(propType == 2)
+         {
+            while(i < _players.length)
+            {
+               if(_players[i][groupName])
+               {
+                  filteredPlayers.push(_players[i]);
+                  _players.splice(i,1);
+               }
+               else
+               {
+                  i++;
+               }
+            }
+         }
+         else
+         {
+            filteredPlayers = _players;
+            _players = [];
+         }
          displayPlayers(filteredPlayers);
       }
       
@@ -955,16 +975,17 @@ package
       {
          var p:int = 0;
          var l:int = int(players.length);
+         var player:Object = null;
          while(p < l)
          {
-            var player:Object = players[p];
+            player = players[p];
             if(this.isValidPlayerToShow(player))
             {
                var textToDisplay:String = this.formatPlayer(player);
                textToDisplay = textToDisplay.replace(STRING_NAME,player.name).replace(STRING_TYPE,player.type).replace(STRING_LEVEL,player.level);
                var yDiff:Number = player.y - playerPosition.y;
                var xDiff:Number = player.x - playerPosition.x;
-               var distance:int = int(getDistance(xDiff,yDiff) / MAP_DISTANCE_CONST);
+               var distance:int = int(getDistance(xDiff,yDiff) * MAP_DISTANCE_CONST);
                var angle:Number = Math.atan2(yDiff,xDiff);
                var direction:String = getDirection(angle);
                var iangle:int = (360 - angle * RAD2DEG) % 360;
@@ -1008,7 +1029,7 @@ package
                   {
                      yDiff = marker.y - playerPosition.y;
                      xDiff = marker.x - playerPosition.x;
-                     distance = int(getDistance(xDiff,yDiff) / MAP_DISTANCE_CONST);
+                     distance = int(getDistance(xDiff,yDiff) * MAP_DISTANCE_CONST);
                      if(distance < 20)
                      {
                         visitedCamps[player.name] = true;
@@ -1131,7 +1152,7 @@ package
                return;
             }
             this.resetMessages();
-            _players = this.getPlayers();
+            _players = sortPlayers(this.getPlayers());
             if(maxServerPlayers == 0)
             {
                maxServerPlayers = Boolean(this.AccountInfoData.data.isOnPrivateWorld) ? MAX_PLAYERS_PRIVATE : MAX_PLAYERS_PUBLIC;
@@ -1219,20 +1240,15 @@ package
       
       public function getPlayers() : Array
       {
-         var players:Array;
-         var playerName:String;
-         var _campMarkers:*;
-         var currentPlayer:Object;
-         var currentPlayersFilter:Array;
-         var exists:Boolean;
+         var existingPlayers:Object = {};
          if(!this.AccountInfoData.data || !this.CharacterInfoData.data)
          {
             return;
          }
          this._textChatUsers = this.getTextChatUserList();
-         players = [];
-         playerName = "";
-         _campMarkers = {};
+         var players:Array = [];
+         var playerName:String = "";
+         var _campMarkers:* = {};
          if(this.MapMenuData && this.MapMenuData.data && this.MapMenuData.data.MarkerData)
          {
             for each(marker in this.MapMenuData.data.MarkerData)
@@ -1240,13 +1256,9 @@ package
                if(marker.playerLevel > 0)
                {
                   playerName = marker.text.split(TITLE_DELIMITED)[0];
-                  currentPlayersFilter = players.filter(function(x:Object):Boolean
+                  if(existingPlayers[playerName] != null)
                   {
-                     return x.name == playerName;
-                  });
-                  if(currentPlayersFilter.length == 1)
-                  {
-                     currentPlayer = currentPlayersFilter[0];
+                     var currentPlayer:Object = players[existingPlayers[playerName]];
                      currentPlayer.type = marker.markerType;
                      currentPlayer.level = marker.playerLevel;
                      currentPlayer.bounty = marker.bounty;
@@ -1267,18 +1279,16 @@ package
                         "x":marker.x,
                         "y":marker.y
                      });
+                     existingPlayers[playerName] = players.length - 1;
                   }
                   lastLevelData[playerName] = marker.playerLevel;
                }
-               else if(marker.markerType == CAMP_MARKER)
+               else if(marker.owningPlayerName && marker.markerType == CAMP_MARKER)
                {
                   if(!marker.isLocalPlayersCamp)
                   {
                      playerName = marker.owningPlayerName.split(TITLE_DELIMITED)[0];
-                     if(players.filter(function(x:Object):Boolean
-                     {
-                        return x.name == playerName;
-                     }).length == 0)
+                     if(existingPlayers[playerName] == null)
                      {
                         players.push({
                            "name":playerName,
@@ -1287,10 +1297,11 @@ package
                            "bounty":0,
                            "isTextChatUser":(playerName.length > 0 ? isTextChatUser(playerName) : false)
                         });
+                        existingPlayers[playerName] = players.length - 1;
                      }
                      if(marker.isVending)
                      {
-                        _campMarkers[marker.owningPlayerName.split(TITLE_DELIMITED)[0]] = {
+                        _campMarkers[playerName] = {
                            "markerId":marker.markerID,
                            "x":marker.x,
                            "y":marker.y
@@ -1312,6 +1323,7 @@ package
                      "x":marker.x,
                      "y":marker.y
                   };
+                  existingPlayers[this.AccountInfoData.data.name] = players.length - 1;
                }
             }
          }
@@ -1324,20 +1336,7 @@ package
                {
                   if(member.playerName.length > 0)
                   {
-                     exists = false;
-                     for each(player in players)
-                     {
-                        if(player.name == member.playerName)
-                        {
-                           if(!member.isLocalPlayerTeammate && (player.type == PLAYER_TEAM_LEADER || player.type == PLAYER_TEAM_MEMBER))
-                           {
-                              player.type = PLAYER_REMOTE;
-                           }
-                           exists = true;
-                           break;
-                        }
-                     }
-                     if(!exists)
+                     if(existingPlayers[member.playerName] == null)
                      {
                         players.push({
                            "name":member.playerName,
@@ -1347,6 +1346,7 @@ package
                            "isTextChatUser":(member.playerName.length > 0 ? isTextChatUser(member.playerName) : false)
                         });
                         lastLevelData[member.playerName] = member.playerLvl;
+                        existingPlayers[member.playerName] = players.length - 1;
                      }
                   }
                }
