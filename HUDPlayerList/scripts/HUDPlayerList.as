@@ -103,7 +103,7 @@ package
       
       private static const TITLE_LOADER:String = "flash.display::Loader";
       
-      private static const TITLE_DELIMITED:String = "|";
+      private static const TITLE_DELIMITER:String = "|";
       
       private static const MAIN_MENU:String = "MainMenu";
       
@@ -1255,7 +1255,7 @@ package
             {
                if(marker.playerLevel > 0)
                {
-                  playerName = marker.text.split(TITLE_DELIMITED)[0];
+                  playerName = marker.text.split(TITLE_DELIMITER)[0];
                   if(existingPlayers[playerName] != null)
                   {
                      var currentPlayer:Object = players[existingPlayers[playerName]];
@@ -1287,7 +1287,7 @@ package
                {
                   if(!marker.isLocalPlayersCamp)
                   {
-                     playerName = marker.owningPlayerName.split(TITLE_DELIMITED)[0];
+                     playerName = marker.owningPlayerName.split(TITLE_DELIMITER)[0];
                      if(existingPlayers[playerName] == null)
                      {
                         players.push({
