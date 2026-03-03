@@ -103,7 +103,7 @@ package
       
       private static const TITLE_LOADER:String = "flash.display::Loader";
       
-      private static const TITLE_DELIMITER:String = "|";
+      private static const TITLE_DELIMITER:String = "<";
       
       private static const MAIN_MENU:String = "MainMenu";
       
