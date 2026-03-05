@@ -80,10 +80,10 @@
 		"hideVisitedCamps": false, // Update 1.1.6
 		"hidePlayersWithoutVendorData": [], // Update 1.1.7, e.g. ["PlayerRemote", "isHidden"]
 		
-		/* Example format with distance, direction and angle:
+		/* Example format with distance, direction and angle, single line:
 		"\t{distance} {direction}({angleCompass}°) |  {APPAREL}{EXPLOSIVE}{WEAPON2}{WEAPON3}{ARMOR2}{ARMOR3}{MODS}"
 		
-		Example format with all data:
+		Example format with all data, multi-line:
 		"\tWeapon: {WEAPON0}{EXPLOSIVE}{WEAPON1}{WEAPON2}{WEAPON3}",
 		"\t{APPAREL}{ARMOR0}{ARMOR1}{ARMOR2}{ARMOR3}",
 		"\t{FOOD}{DRINK}{STIMPAK}{MEDS}{MISC}{JUNK}{PLAN}{AMMO}{MODS}"
@@ -94,7 +94,7 @@
 		 "| Vend:{distance} {direction} | {APPAREL}{WEAPON2}{WEAPON3}{ARMOR2}{ARMOR3}{MODS}"
 		 */
 		"format": [
-			"| Vend:{distance} {direction} | {APPAREL}{WEAPON2}{WEAPON3}{ARMOR2}{ARMOR3}{MODS}"
+			"| Vend:{distance} {direction} | MOD-W[{MODS_WEAPON1},{MODS_WEAPON2},{MODS_WEAPON3},{MODS_WEAPON4}] | MOD-A[{MODS_ARMOR1},{MODS_ARMOR2},{MODS_ARMOR3},{MODS_ARMOR4}] | MOD-PA[{MODS_PA1},{MODS_PA2},{MODS_PA3},{MODS_PA4}]"
 		],
 		"formats": {
 			"{APPAREL}": "Aprl[{value}] ",
@@ -102,11 +102,27 @@
 			"{ARMOR1}": "A¬[{value}] ",
 			"{ARMOR2}": "A¬¬[{value}] ",
 			"{ARMOR3}": "A¬¬¬[{value}] ",
+			"{ARMOR4}": "A¬¬¬¬[{value}] ",
 			"{WEAPON0}": "[{value}] ",
 			"{WEAPON1}": "¬[{value}] ",
 			"{WEAPON2}": "¬¬[{value}] ",
 			"{WEAPON3}": "¬¬¬[{value}] ",
+			"{WEAPON4}": "W¬¬¬¬[{value}] ",
 			"{MODS}": "Mod[{value}] ",
+			
+			"{MODS_WEAPON1}": "{value}",
+			"{MODS_WEAPON2}": "{value}",
+			"{MODS_WEAPON3}": "{value}",
+			"{MODS_WEAPON4}": "{value}",
+			"{MODS_ARMOR1}": "{value}",
+			"{MODS_ARMOR2}": "{value}",
+			"{MODS_ARMOR3}": "{value}",
+			"{MODS_ARMOR4}": "{value}",
+			"{MODS_PA1}": "{value}",
+			"{MODS_PA2}": "{value}",
+			"{MODS_PA3}": "{value}",
+			"{MODS_PA4}": "{value}",
+			
 			"{STIMPAK}": "Stim[{value}] ",
 			"{MEDS}": "Med[{value}] ",
 			"{FOOD}": "Food[{value}] ",
