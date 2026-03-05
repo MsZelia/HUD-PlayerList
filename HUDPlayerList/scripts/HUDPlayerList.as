@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.2.4";
+      public static const MOD_VERSION:String = "1.3.0";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -107,7 +107,7 @@ package
       
       private static const MAIN_MENU:String = "MainMenu";
       
-      private static const VENDING_CATEGORY_NAMES:Array = ["{APPAREL}","{ARMOR0}","{ARMOR1}","{ARMOR2}","{ARMOR3}","{WEAPON0}","{WEAPON1}","{WEAPON2}","{WEAPON3}","{MODS}","{STIMPAK}","{MEDS}","{FOOD}","{DRINK}","{AMMO}","{EXPLOSIVE}","{JUNK}","{PLAN}","{MISC}"];
+      private static const VENDING_CATEGORY_NAMES:Array = ["{APPAREL}","{ARMOR0}","{ARMOR1}","{ARMOR2}","{ARMOR3}","{ARMOR4}","{WEAPON0}","{WEAPON1}","{WEAPON2}","{WEAPON3}","{WEAPON4}","{MODS}","{MODS_WEAPON1}","{MODS_WEAPON2}","{MODS_WEAPON3}","{MODS_WEAPON4}","{MODS_ARMOR1}","{MODS_ARMOR2}","{MODS_ARMOR3}","{MODS_ARMOR4}","{MODS_PA1}","{MODS_PA2}","{MODS_PA3}","{MODS_PA4}","{STIMPAK}","{MEDS}","{FOOD}","{DRINK}","{AMMO}","{EXPLOSIVE}","{JUNK}","{PLAN}","{MISC}"];
       
       private static const VENDING_CATEGORIES:* = {
          "{APPAREL}":0,
@@ -115,20 +115,34 @@ package
          "{ARMOR1}":2,
          "{ARMOR2}":3,
          "{ARMOR3}":4,
-         "{WEAPON0}":5,
-         "{WEAPON1}":6,
-         "{WEAPON2}":7,
-         "{WEAPON3}":8,
-         "{MODS}":9,
-         "{STIMPAK}":10,
-         "{MEDS}":11,
-         "{FOOD}":12,
-         "{DRINK}":13,
-         "{AMMO}":14,
-         "{EXPLOSIVE}":15,
-         "{JUNK}":16,
-         "{PLAN}":17,
-         "{MISC}":18
+         "{ARMOR4}":5,
+         "{WEAPON0}":6,
+         "{WEAPON1}":7,
+         "{WEAPON2}":8,
+         "{WEAPON3}":9,
+         "{WEAPON4}":10,
+         "{MODS}":11,
+         "{MODS_WEAPON1}":12,
+         "{MODS_WEAPON2}":13,
+         "{MODS_WEAPON3}":14,
+         "{MODS_WEAPON4}":15,
+         "{MODS_ARMOR1}":16,
+         "{MODS_ARMOR2}":17,
+         "{MODS_ARMOR3}":18,
+         "{MODS_ARMOR4}":19,
+         "{MODS_PA1}":20,
+         "{MODS_PA2}":21,
+         "{MODS_PA3}":22,
+         "{MODS_PA4}":23,
+         "{STIMPAK}":24,
+         "{MEDS}":25,
+         "{FOOD}":26,
+         "{DRINK}":27,
+         "{AMMO}":28,
+         "{EXPLOSIVE}":29,
+         "{JUNK}":30,
+         "{PLAN}":31,
+         "{MISC}":32
       };
       
       private static const RAD2DEG:Number = 180 / Math.PI;
