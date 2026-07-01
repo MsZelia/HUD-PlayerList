@@ -1044,7 +1044,7 @@ package
                      yDiff = marker.y - playerPosition.y;
                      xDiff = marker.x - playerPosition.x;
                      distance = int(getDistance(xDiff,yDiff) * MAP_DISTANCE_CONST);
-                     if(distance < 20)
+                     if(distance < 25)
                      {
                         visitedCamps[player.name] = true;
                      }
