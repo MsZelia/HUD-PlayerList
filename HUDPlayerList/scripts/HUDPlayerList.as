@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.3.0";
+      public static const MOD_VERSION:String = "1.3.1";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -147,7 +147,7 @@ package
       
       private static const RAD2DEG:Number = 180 / Math.PI;
       
-      private static const MAP_DISTANCE_CONST:Number = 4096;
+      private static const MAP_DISTANCE_CONST:Number = 5005;
       
       private static const LOCALIZED_HEADINGS:* = ["$Compass_West","$Compass_North","$Compass_East","$Compass_South"];
       
