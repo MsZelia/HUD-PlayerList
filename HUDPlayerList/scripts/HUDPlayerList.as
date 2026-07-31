@@ -183,6 +183,8 @@ package
       
       private var CharacterInfoData:*;
       
+      private var CharacterNameData:*;
+      
       private var PublicTeamsData:*;
       
       private var MapMenuData:*;
@@ -238,6 +240,7 @@ package
          this.HUDModeData = BSUIDataManager.GetDataFromClient("HUDModeData");
          this.AccountInfoData = BSUIDataManager.GetDataFromClient("AccountInfoData");
          this.CharacterInfoData = BSUIDataManager.GetDataFromClient("CharacterInfoData");
+         this.CharacterNameData = BSUIDataManager.GetDataFromClient("CharacterNameData");
          this.PublicTeamsData = BSUIDataManager.GetDataFromClient("PublicTeamsData");
          this.MapMenuData = BSUIDataManager.GetDataFromClient("MapMenuData");
       }
@@ -1007,7 +1010,7 @@ package
                textToDisplay = textToDisplay.replace(STRING_ANGLE,iangle).replace(STRING_ANGLE_COMPASS,iangleCompass).replace(STRING_DIRECTION,direction).replace(STRING_DISTANCE,distance);
                if(player.type == PLAYER_LOCAL)
                {
-                  textToDisplay = textToDisplay.replace(STRING_CHARACTER_NAME,this.CharacterInfoData.data.name);
+                  textToDisplay = textToDisplay.replace(STRING_CHARACTER_NAME,this.CharacterNameData.data.characterName);
                }
                else
                {
