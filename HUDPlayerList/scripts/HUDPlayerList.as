@@ -290,6 +290,7 @@ package
       
       public function addedToStageHandler(param1:Event) : *
       {
+         this.updateVisibility();
          removeEventListener(Event.ADDED_TO_STAGE,this.addedToStageHandler);
          addEventListener(Event.REMOVED_FROM_STAGE,this.removedFromStageHandler,false,0,true);
          this.topLevel = stage.getChildAt(0);
@@ -298,6 +299,7 @@ package
             if(getQualifiedClassName(this.topLevel) == TITLE_HUDMENU)
             {
                this.isInMainMenu = false;
+               BSUIDataManager.Subscribe("HUDModeData",this.updateVisibility);
                this.hudTools = new SharedHUDTools(MOD_NAME);
                this.hudTools.RegisterMenu(this.onBuildMenu,this.onSelectMenu);
             }
@@ -305,6 +307,7 @@ package
             {
                this.isHudMenu = false;
                BSUIDataManager.Subscribe("MenuStackData",this.updateIsMainMenu);
+               BSUIDataManager.Subscribe("HUDModeData",this.updateVisibility);
                stage.addEventListener(KeyboardEvent.KEY_DOWN,this.keyDownHandler,false,0,true);
                stage.addEventListener(KeyboardEvent.KEY_UP,this.keyUpHandler,false,0,true);
             }
@@ -324,6 +327,7 @@ package
       {
          BSUIDataManager.Unsubscribe("MenuStackData",this.updateIsMainMenu);
          BSUIDataManager.Unsubscribe("RecentActivitiesData",this.onRecentActivitiesDataUpdate);
+         BSUIDataManager.Unsubscribe("HUDModeData",this.updateVisibility);
          removeEventListener(Event.REMOVED_FROM_STAGE,this.removedFromStageHandler);
          if(stage)
          {
@@ -382,10 +386,12 @@ package
             else if(selectItem == HUDTOOLS_MENU_TOGGLE_VISIBILITY)
             {
                this.toggleVisibility = !this.toggleVisibility;
+               this.updateVisibility();
             }
             else if(selectItem == HUDTOOLS_MENU_HIDE)
             {
                this.forceHide = !this.forceHide;
+               this.updateVisibility();
             }
             else if(selectItem == HUDTOOLS_MENU_RELOAD_CONFIG)
             {
@@ -451,10 +457,12 @@ package
          if(event.keyCode == config.toggleVisibilityHotkey)
          {
             this.toggleVisibility = !this.toggleVisibility;
+            this.updateVisibility();
          }
          if(event.keyCode == config.forceHideHotkey)
          {
             this.forceHide = !this.forceHide;
+            this.updateVisibility();
          }
       }
       
@@ -470,6 +478,17 @@ package
             {
                this.maxServerPlayers = 0;
             }
+         }
+         catch(e:Error)
+         {
+         }
+      }
+      
+      private function updateVisibility() : void
+      {
+         try
+         {
+            this.visible = !this.forceHide && Boolean(this.isValidHUDMode() ^ this.toggleVisibility);
          }
          catch(e:Error)
          {
@@ -1169,7 +1188,6 @@ package
          try
          {
             t1 = Number(getTimer());
-            this.visible = !this.forceHide && Boolean(this.isValidHUDMode() ^ this.toggleVisibility);
             if(!this.visible)
             {
                return;
