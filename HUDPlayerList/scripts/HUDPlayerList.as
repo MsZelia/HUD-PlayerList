@@ -23,7 +23,7 @@ package
       
       public static const MOD_NAME:String = "HUDPlayerList";
       
-      public static const MOD_VERSION:String = "1.3.1";
+      public static const MOD_VERSION:String = "1.3.2";
       
       public static const FULL_MOD_NAME:String = MOD_NAME + " " + MOD_VERSION;
       
@@ -283,9 +283,9 @@ package
          return HEADINGS[i % HEADINGS.length];
       }
       
-      private static function getDistance(x:Number, y:Number) : Number
+      private static function getDistance(x:Number, y:Number) : int
       {
-         return Math.sqrt(Math.pow(x,2) + Math.pow(y,2));
+         return int(Math.sqrt(Math.pow(x,2) + Math.pow(y,2)) * MAP_DISTANCE_CONST);
       }
       
       public function addedToStageHandler(param1:Event) : *
@@ -477,6 +477,7 @@ package
             if(this.isInMainMenu)
             {
                this.maxServerPlayers = 0;
+               this._players = [];
             }
          }
          catch(e:Error)
@@ -1027,7 +1028,7 @@ package
                textToDisplay = textToDisplay.replace(STRING_NAME,player.name).replace(STRING_TYPE,player.type).replace(STRING_LEVEL,player.level);
                var yDiff:Number = player.y - playerPosition.y;
                var xDiff:Number = player.x - playerPosition.x;
-               var distance:int = int(getDistance(xDiff,yDiff) * MAP_DISTANCE_CONST);
+               var distance:int = getDistance(xDiff,yDiff);
                var angle:Number = Math.atan2(yDiff,xDiff);
                var direction:String = getDirection(angle);
                var iangle:int = (360 - angle * RAD2DEG) % 360;
@@ -1071,7 +1072,7 @@ package
                   {
                      yDiff = marker.y - playerPosition.y;
                      xDiff = marker.x - playerPosition.x;
-                     distance = int(getDistance(xDiff,yDiff) * MAP_DISTANCE_CONST);
+                     distance = getDistance(xDiff,yDiff);
                      if(distance < 25)
                      {
                         visitedCamps[player.name] = true;
@@ -1284,7 +1285,7 @@ package
          var existingPlayers:Object = {};
          if(!this.AccountInfoData.data || !this.CharacterInfoData.data)
          {
-            return;
+            return [];
          }
          this._textChatUsers = this.getTextChatUserList();
          var players:Array = [];
@@ -1423,7 +1424,7 @@ package
       
       public function getTextChat() : void
       {
-         if(!this.isHudMenu || !this.topLevel)
+         if(!this.isHudMenu || !this.topLevel || getTimer() > 20000)
          {
             return;
          }
